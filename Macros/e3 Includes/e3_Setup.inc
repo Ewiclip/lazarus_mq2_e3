@@ -149,10 +149,10 @@ SUB e3_Setup(modeSelect)
 	/if (${Bool[${Ini[${Character_Ini},Heals]}]} && !${Bool[${Ini[${Character_Ini},Heals,Auto Cast Necro Heal Orbs (On/Off)]}]}) {
 		/call WriteToIni "${Character_Ini},Heals,Auto Cast Necro Heal Orbs (On/Off)" On
 	}
-
-	
-
-	/echo e3 loaded - Turbo ${classTurbo}
+	/if (${Bool[${Ini[${Character_Ini},Misc]}]} && !${Bool[${Ini[${Character_Ini},Misc,Anchor (Char to Anchor to)]}]}) {
+		/call WriteToIni "${Character_Ini},Misc,Anchor (Char to Anchor to)" ""
+	}
+ 	/echo e3 loaded - Turbo ${classTurbo}
 	
 	/if (${Debug}) {
 		/echo
@@ -407,7 +407,13 @@ SUB check_Plugins
   |Check MQ2ItemDisplay.
 	/if (!${Plugin[mq2itemdisplay].Name.Length}) /plugin MQ2ItemDisplay
 	|Check MQ2LinkDB
-	/if (!${Plugin[MQ2LinkDB].Name.Length}) /plugin MQ2LinkDB
+	/if (!${Plugin[MQ2LinkDB].Name.Length}) {
+			 /plugin MQ2LinkDB
+			 
+	}
+	|new mq2 version has performance issues with version 2.3 of the plugin
+	|when scanning new links. Diabled by default for now.
+	/link /scan off
   |Check MQ2ITurbo
   /if (!${Plugin[mq2turbo].Name.Length}) {
     /plugin MQ2Turbo

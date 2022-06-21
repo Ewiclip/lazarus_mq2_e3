@@ -191,7 +191,7 @@ SUB ListToArray(ArrayName, Data, delimiter)
 Sub BuildSpellArrayDefinedValues()
 
 	/if (!${Defined[SpellProp]}) {
-		/declare SpellProp[46] string outer 0
+		/declare SpellProp[49] string outer 0
 		/varset SpellProp[1] CastName
 		/varset SpellProp[2] CastType
 		/varset SpellProp[3] TargetType
@@ -238,6 +238,9 @@ Sub BuildSpellArrayDefinedValues()
 		/varset SpellProp[43] BeforeSpell
 		/varset SpellProp[44] AfterSpell
 		/varset SpellProp[45] NoInterrupt
+		/varset SpellProp[46] AfterEvent
+		/varset SpellProp[47] BeforeEvent
+		/varset SpellProp[48] CastIF
 
 		
 	}
@@ -286,6 +289,10 @@ Sub BuildSpellArrayDefinedValues()
 	/if (!${Defined[iBeforeSpell]})		/declare iBeforeSpell int outer 43
 	/if (!${Defined[iAfterSpell]})		/declare iAfterSpell int outer 44
 	/if (!${Defined[iNoInterrupt]})		/declare iNoInterrupt int outer 45
+	/if (!${Defined[iAfterEvent]})		/declare iAfterEvent int outer 46
+	/if (!${Defined[iBeforeEvent]})		/declare iBeforeEvent int outer 47
+	/if (!${Defined[iCastIf]})		/declare iCastIf int outer 48
+	
 
 /return
 
@@ -346,6 +353,7 @@ SUB BuildSingleSpellArrayBase(spellName, NewArrayName, SkipParams)
 	/varset ${NewArrayName}[1,${iSpellGem}] ${DefaultGem}
 	/varset ${NewArrayName}[1,${iMaxTries}] 5
 	/varset ${NewArrayName}[1,${iCheckFor}] -1
+	/varset ${NewArrayName}[1,${iCastIf}] -1
 	/varset ${NewArrayName}[1,${iMaxMana}] 100
 	/varset ${NewArrayName}[1,${iMinHP}] 70
 	/varset	${NewArrayName}[1,${iZone}] All
@@ -563,7 +571,7 @@ SUB BuildSpellArrayBase(ArrayName, NewArrayName, SkipParams)
 			/if (!(${Me.Book[${tmp_castname}]}||${Me.AltAbility[${tmp_castname}]}||${Me.CombatAbility[${tmp_castname}]}||${Me.Ability[${tmp_castname}]})) {
 				
 				|default to item - no way to validate an item thats on my corpse
-				/if (!${FindItem[=${tmp_castname}].ID}) {
+				/if (!${FindItem[${tmp_castname}].ID}) {
 
 					/if (!${Bool[${Me.Inventory[Chest]}]} && !${Me.Platinum}) {
 						/varset reloadOnLoot TRUE
@@ -604,11 +612,12 @@ SUB BuildSpellArrayBase(ArrayName, NewArrayName, SkipParams)
 		} else {
 			/varset ${NewArrayName}[${i},${iCastType}] Item
 		}
-		
+		|/echo ${${NewArrayName}[${i},${iCastName}]} type is: ${${NewArrayName}[${i},${iCastType}]}
 		|set the normal defaults
 		/varset ${NewArrayName}[${i},${iSpellGem}] ${DefaultGem}
 		/varset ${NewArrayName}[${i},${iMaxTries}] 5
 		/varset ${NewArrayName}[${i},${iCheckFor}] -1
+		/varset ${NewArrayName}[${i},${iCastIf}] -1
 		/varset ${NewArrayName}[${i},${iMaxMana}] 100
 		/varset ${NewArrayName}[${i},${iMinHP}] 70
 		/varset	${NewArrayName}[${i},${iZone}] All
@@ -643,16 +652,29 @@ SUB BuildSpellArrayBase(ArrayName, NewArrayName, SkipParams)
 
 			| get AfterSpell
 			/if (${${ArrayName}[${i}].Find[/AfterSpell|]}) {
-				/varset printMin true
+				|/varset printMin true
 				/call argueString AfterSpell| "${${ArrayName}[${i}]}"
+				/varset ${NewArrayName}[${i},${iAfterSpell}] ${c_argueString}
+			}
+			| get AfterCast, Alias for AfterSpell
+			/if (${${ArrayName}[${i}].Find[/AfterCast|]}) {
+				|/varset printMin true
+				/call argueString AfterCast| "${${ArrayName}[${i}]}"
 				/varset ${NewArrayName}[${i},${iAfterSpell}] ${c_argueString}
 			}
 			| get BeforeSpell
 			/if (${${ArrayName}[${i}].Find[/BeforeSpell|]}) {
-				/varset printMin true
+				|/varset printMin true
 				/call argueString BeforeSpell| "${${ArrayName}[${i}]}"
 				/varset ${NewArrayName}[${i},${iBeforeSpell}] ${c_argueString}
 			}
+			| get BeforeCast, Alias for BeforeSpell
+			/if (${${ArrayName}[${i}].Find[/BeforeCast|]}) {
+				|/varset printMin true
+				/call argueString BeforeCast| "${${ArrayName}[${i}]}"
+				/varset ${NewArrayName}[${i},${iBeforeSpell}] ${c_argueString}
+			}
+			
 			| get SubToRun
 			/if (${${ArrayName}[${i}].Find[/SubToRun|]}) {
 				/call argueString SubToRun| "${${ArrayName}[${i}]}"
@@ -675,6 +697,12 @@ SUB BuildSpellArrayBase(ArrayName, NewArrayName, SkipParams)
 				/call argueString CheckFor| "${${ArrayName}[${i}]}"
 				/varset ${NewArrayName}[${i},${iCheckFor}] ${c_argueString}
 			}
+			| get CastIf
+			/if (${${ArrayName}[${i}].Find[/CastIf|]}) {
+				/call argueString CastIf| "${${ArrayName}[${i}]}"
+				/varset ${NewArrayName}[${i},${iCastIf}] ${c_argueString}
+			}
+			
 			
 			| get MinMana
 			/if (${${ArrayName}[${i}].Find[/MinMana|]}) {
@@ -789,10 +817,25 @@ SUB BuildSpellArrayBase(ArrayName, NewArrayName, SkipParams)
 			/if (${${ArrayName}[${i}].Find[/Ifs|]}) {
 				/call argueString Ifs| "${${ArrayName}[${i}]}"
 				/varset ${NewArrayName}[${i},${iIfs}] ${Ini[${Character_Ini},Ifs,${c_argueString},NULL,noparse]}
-			| we kind of need to print here instead of like everything else :P
+			| we kind of need to print here instead of like everything else
 				/if (${printAll}) /echo Ifs ${c_argueString}
 			}
 
+			| get AfterEvent - used in various places	
+			/if (${${ArrayName}[${i}].Find[/AfterEvent|]}) {
+				/call argueString AfterEvent| "${${ArrayName}[${i}]}"
+				/varset ${NewArrayName}[${i},${iAfterEvent}] ${Ini[${Character_Ini},Events,${c_argueString},NULL,noparse]}
+				| we kind of need to print here instead of like everything else
+				/if (${printAll}) /echo AfterEvent ${c_argueString}
+			}
+
+			| get AfterEvent - used in various places	
+			/if (${${ArrayName}[${i}].Find[/BeforeEvent|]}) {
+				/call argueString BeforeEvent| "${${ArrayName}[${i}]}"
+				/varset ${NewArrayName}[${i},${iBeforeEvent}] ${Ini[${Character_Ini},Events,${c_argueString},NULL,noparse]}
+				| we kind of need to print here instead of like everything else
+				/if (${printAll}) /echo BeforeEvent ${c_argueString}
+			}
 			| get MinEnd
 			/if (${${ArrayName}[${i}].Find[/MinEnd|]}) {
 				/call argueString MinEnd| "${${ArrayName}[${i}]}"
@@ -808,9 +851,9 @@ SUB BuildSpellArrayBase(ArrayName, NewArrayName, SkipParams)
 			|Instead of calling FindItem 12 times, we call it twice and get a direct reference to the item in question
 
 			| ${Me.Inventory[23].Item[7].Spell.TargetType}
-			/varset invSlot ${FindItem[=${${NewArrayName}[${i},${iCastName}]}].ItemSlot}
-			/varset bagSlot ${FindItem[=${${NewArrayName}[${i},${iCastName}]}].ItemSlot2}
-
+			/varset invSlot ${FindItem[${${NewArrayName}[${i},${iCastName}]}].ItemSlot}
+			/varset bagSlot ${FindItem[${${NewArrayName}[${i},${iCastName}]}].ItemSlot2}
+			|/echo ${${NewArrayName}[${i},${iCastName}]} inv slot: ${invSlot} bag slot: ${bagSlot}
 			/if (${bagSlot}==-1) {
 				|/echo root item: id:${invSlot} :${${ArrayName}[${i}].Arg[1,/]}
 				|Means this is not in a bag and in the root inventory
@@ -901,7 +944,7 @@ SUB BuildSpellArrayBase(ArrayName, NewArrayName, SkipParams)
 			/varset	${NewArrayName}[${i},${iSpellName}] ${Spell[${${NewArrayName}[${i},${iCastName}]}]}
 			/varset	${NewArrayName}[${i},${iSpellID}] ${Spell[${${NewArrayName}[${i},${iCastName}]}].ID}
 			/varset	${NewArrayName}[${i},${iCastID}] ${Spell[${${NewArrayName}[${i},${iCastName}]}].ID}
-		
+			/varset	${NewArrayName}[${i},${iSpellType}] ${Spell[${${NewArrayName}[${i},${iCastName}]}].SpellType}
 		
 		}
 
@@ -1511,3 +1554,89 @@ SUB Build_Class_Ini(Ini_File)
 SUB event_sendInstanceInvites(line, ChatSender)
 	/dzadd ${ChatSender}
 /return
+
+|----------------------------------------------------------------------------|
+|- Sanity check for when Waiting4Rez may fail								-|
+|----------------------------------------------------------------------------|
+|- Checks inventory and equipment to determine if player might be dead   	-|
+|----------------------------------------------------------------------------|
+sub check_AmIDead_Default
+    
+    /call check_AmIDead 1 1
+
+/return ${Macro.Return}
+
+
+sub check_AmIDead(int equipmentThreshold, int inventoryThreshold)
+/if (${Debug}) /echo [${Time}]: check_AmIDead
+
+    /if (!${Defined[missingEquipment]}) /declare missingEquipment bool local
+    /if (!${Defined[missingInventory]}) /declare missingInventory bool local
+
+    /call check_MissingEquipment ${equipmentThreshold}
+    /varset missingEquipment ${Macro.Return}
+    /call check_MissingInventory ${inventoryThreshold}
+    /varset missingInventory ${Macro.Return}
+    /if (${Debug}) /echo [${Time}]: check_AmIDead: Equipment ${missingEquipment}, Inventory: ${missingInventory}
+    /if (!(${missingEquipment} && ${missingInventory})) {
+        /return false
+    }
+
+/if (${Debug}) /echo [${Time}]: check_AmIDead: Check failed, character may be dead.
+/return true
+|----------------------------------------------------------------------------|
+|-    Equipment 															-|
+|- 1. A mage could summon mod rod in toons proximity, causing the toon to   -|
+|-	  autoinventory it to their mainhand - skip No Rent items 				-|
+|- 2. A player could intentionally have removed an item in any slot for 	-|
+|-	  reasons of their own choosing 										-|
+|- 3. Its common for players to not have offhand (14), powersource (21) or  -|
+|-	  ammo (22)																-|
+|----------------------------------------------------------------------------|
+sub check_MissingEquipment(int threshold)
+/if (${Debug}) /echo [${Time}]: check_MissingEquipment: Start
+
+    /declare i int local 
+    /declare equipmentFound int local
+
+    /for i 0 to 20
+    /if (${i} == 14) /continue
+    /if (${Bool[${InvSlot[${i}].Item.ID}]} && !${Bool[${InvSlot[${i}].Item.NoRent}]}) {
+        /varset equipmentFound ${Math.Calc[${equipmentFound}+1]}
+        /if (${Debug}) /echo [${Time}]: check_MissingEquipment: Item ${InvSlot[${i}].Item.Name} found found in slot: ${InvSlot[${i}]}
+    }
+    
+    /if (${equipmentFound} >= ${threshold}) {
+        /if (${Debug}) /echo [${Time}]: check_MissingEquipment: PASSED
+        /return false
+    } 
+    /next i
+
+/if (${Debug}) /echo [${Time}]: check_MissingEquipment: FAILED
+/return true
+|----------------------------------------------------------------------------|
+|- 	  Inventory 															-|
+|- 1. Going to assume if you have 1 bag or item PASS 						-|
+|- 2. Ignore No Rent items and Folded Packs. These can be summoned onto 	-|
+|- 	  your cursor by other players. 										-|
+|----------------------------------------------------------------------------|
+sub check_MissingInventory(int threshold)
+/if (${Debug}) /echo [${Time}]: check_MissingInventory Start
+
+    /declare i int local
+    /declare inventoryFound int local
+
+    /for i 1 to 10
+    /if (${Bool[${InvSlot[pack${i}].Item.ID}]} && !${Bool[${InvSlot[pack${i}].Item.NoRent}]} && !${Bool[${InvSlot[pack${i}].Item.Name.Find[Folded Pack]}]}) {
+        /varset inventoryFound ${Math.Calc[${inventoryFound}+1]}
+        /if (${Debug}) /echo [${Time}]: check_MissingInventory: Found bag or item ${InvSlot[pack${i}].Item.Name} in slot ${i}
+    }
+
+    /if (${inventoryFound} >= ${threshold}) {
+        /if (${Debug}) /echo [${Time}]: check_MissingInventory: PASSED
+        /return false
+    }
+    /next i
+
+/if (${Debug}) /echo [${Time}]: check_MissingInventory: FAILED
+/return true
