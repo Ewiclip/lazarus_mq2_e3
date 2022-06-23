@@ -39,7 +39,10 @@ SUB summonPet
   }
   /if (${Me.Pet.ID}) {
     /squelch /pet ghold on
-  }  
+  }
+  /if (${Me.Pet.ID} && ${petAutoEquip}) {
+    /call equipMyPet ${petAutoLoadout}
+  }
 	/if (${Debug} || ${Debug_Pets}) /echo <== summonPet -|
 /RETURN
 
@@ -180,15 +183,16 @@ SUB event_returnMinion(line, ChatSender)
 
 |------------------------------------------------------------|
 | functions for supplying equipment and weapons to pets
-| TODO - provide a default / automatic arm pet option after character summons a new pet
 #event equipMyPet "<#1#> Equip Pet"
 #event equipMyPet "<#1#> Equip Pet #2#"
 #event equipMyPet "[#1#(msg)] Equip Pet"
 #event equipMyPet "[#1#(msg)] Equip Pet #2#"
 #event equipMyPet "#1# tells you, 'Equip Pet'"
 #event equipMyPet "#1# tells you, 'Equip Pet #2#'"
-sub event_equipMyPet(line)
+sub event_equipMyPet(line, ChatSender)
 /if (${Debug} || ${Debug_Pets}) /echo equipMyPet ==>
+
+  /if (!${NetBots[${ChatSender}].ID}>0) /return 
 
   /declare loadType string local
   /if (${line.Find[raid]}) {
@@ -197,27 +201,102 @@ sub event_equipMyPet(line)
     /varset loadType ${petDpsLoadout}
   } else /if (${line.Find[hc]}) {
     /varset loadType ${petHcLoadout}
-  } else /if (${line.Find[default]}) {
-    /varset loadType ${petDefaultLoadout}
+  } else {
+      /if (${line.Find[tells you]}) {
+        /if (${line.Token[6, ].Length}>0) /varset newLoadOut ${line.Token[6, ].Left[-1]}
+    } else {
+        /if (${line.Token[4, ].Length}>0) /varset newLoadOut ${line.Token[4, ].Left[-1]}
+    }
   }
   /if (${Debug} || ${Debug_Pets}) /echo equipMyPet: loadType is ${loadType} and line is ${line}
-  
-  /call checkForOpenBagSlot
-  /if (!${Macro.Return}) {
-    /echo There was an error getting a bag slot, unable to arm pets.
-    /return 
-  }
-
-  /bc Attempting to equip my pet with ${loadType} load out.
-  /call equipOnePet ${Me.Name} ${loadType}
-  /call findAndDestroyOldSatchels
-  
-  /bc Finished Equiping my pet.
+  /echo equipMyPet: loadType is ${loadType} and line is ${line}
+  /call equipMyPet ${loadType}
 
 /if (${Debug} || ${Debug_Pets}) /echo <== equipMyPet
 /return 
 
+|------------------------------------------------------------|
+| Summons a new pet and equips specified weapon loadout
+#event resummonAndGearPet "<#1#> New Pet #2#"
+#event resummonAndGearPet "[#1#(msg)] New Pet #2#"
+#event resummonAndGearPet "#1# tells you, 'New Pet #2#'"
+sub event_resummonAndGearPet(line, ChatSender)
+/if (${Debug} || ${Debug_Pets}) /echo resummonAndGearPet ==>
 
+  /if (!${NetBots[${ChatSender}].ID}>0) /return 
+  /declare newLoadOut string local
+  /if (${line.Find[raid]}) {
+    /varset newLoadOut ${petRaidLoadout}
+  } else /if (${line.Find[dps]}) {
+    /varset newLoadOut ${petDpsLoadout}
+  } else /if (${line.Find[hc]}) {
+    /varset newLoadOut ${petHcLoadout}
+  } else {
+      /if (${line.Find[tells you]}) {
+        /if (${line.Token[6, ].Length}>0) /varset newLoadOut ${line.Token[6, ].Left[-1]}
+    } else {
+        /if (${line.Token[4, ].Length}>0) /varset newLoadOut ${line.Token[4, ].Left[-1]}
+    }
+  }
+  
+  /if (!${newLoadOut.Length}>0) {
+    /bc Resummon Pet: No loadout was specified, exiting.
+    /return
+  }
+  /if (!(${FindItemCount[${petPack_EnibiksHeirlooms}]} > 0)) {
+    /bc I do not have a ${petPack_EnibiksHeirlooms} to give to pet. Cancelling.
+    /return
+  }
+  /if (!(${FindItemCount[${petPack_SpectralPlate}]} > 0)) {
+    /bc I do not have a ${petPack_SpectralPlate} to give to pet. Cancelling.
+    /return
+  }
+  /if (!(${FindItemCount[${petPack_SpectralArm}]} > 0)) {
+    /bc I do not have a ${petPack_SpectralArm} to give to pet. Cancelling.
+    /return
+  }
+
+  /if (${Debug} || ${Debug_Pets}) /echo resummonAndGearPet: new load out is ${newLoadOut} and line is ${line}
+
+  /declare autoEquipEnabled bool local ${petAutoEquip}
+  /if (${petAutoEquip}) /varset petAutoEquip false
+  /pet leave
+  /call summonPet 
+  /call equipMyPet ${newLoadOut}
+  /if (${autoEquipEnabled}) /varset petAutoEquip true
+
+/if (${Debug} || ${Debug_Pets}) /echo <== resummonAndGearPet
+/return
+
+sub equipMyPet(loadoutName)
+  /call checkForOpenBagSlot
+  /if (!${Macro.Return}) {
+    /bc There was an error getting a bag slot, unable to arm pets.
+    /return 
+  }
+
+  /bc Attempting to equip my pet with ${loadoutName} load out.
+  /call equipOnePet ${Me.Name} ${loadoutName}
+  /call findAndDestroyOldSatchels
+
+  /if (!(${FindItemCount[${petPack_EnibiksHeirlooms}]} > 0) || !(${FindItemCount[${petPack_SpectralPlate}]} > 0) || !(${FindItemCount[${petPack_SpectralArm}]} > 0)) {
+    /bc I am out of one or more Mage folded packs and will need more to equip my next pet. 
+  } 
+
+  | Try to put a folded pack in the bag slot to placehold it.
+  /if ((${FindItemCount[${petPack_EnibiksHeirlooms}]} > 0)) {
+    /itemnotify ${petPack_EnibiksHeirlooms} leftmouseup
+  } else /if ((${FindItemCount[${petPack_SpectralPlate}]} > 0)) {
+    /itemnotify ${petPack_SpectralPlate} leftmouseup
+  } else /if ((${FindItemCount[${petPack_SpectralArm}]} > 0)) {
+    /itemnotify ${petPack_SpectralArm} leftmouseup
+  }
+  /call ClearCursor
+  
+  /bc Finished Equiping my pet. Remaining packs - Heirloom: ${FindItemCount[${petPack_EnibiksHeirlooms}]}, Plate: ${FindItemCount[${petPack_SpectralPlate}]}, Arm: ${FindItemCount[${petPack_SpectralArm}]}
+/return 
+
+|------------------------------------------------------------|
 sub equipOnePet(playerName, loadoutType)
 
     /if (!${Spawn[${playerName}].Pet.ID} || ${Spawn[${playerName}].Pet.Name.Find[familiar]} || !${Spawn[${playerName}].Pet.Level}>1) /return
@@ -240,6 +319,12 @@ sub equipOnePet(playerName, loadoutType)
       /return
     }
 
+    | In case they decide to leave while casting.
+    /if (!${SpawnCount[pc ${playerName}]} || ${Spawn[pc ${playerName}].Distance} > 100) {
+      /tell ${playerName} It appears you left before I was finished.
+      /return
+    }
+
     /declare bodytype string local
     /declare char_class string local
     /declare primaryWeapon string local
@@ -250,7 +335,13 @@ sub equipOnePet(playerName, loadoutType)
       /call unpackAndGive ${Spawn[${playerName}].Pet.ID} ${petPack_EnibiksHeirlooms}
     } 
     /if (${Cursor.ID}) {
+      /call ClearCursor
+      /delay 2s !${Bool[${Cursor.ID}]}
       /bc equipOnePet: Something went wrong and something is on your cursor, exiting.
+      /return
+    }
+    /if (!${SpawnCount[pc ${playerName}]} || ${Spawn[pc ${playerName}].Distance} > 100) {
+      /tell ${playerName} It appears you left before I was finished.
       /return
     }
 
@@ -258,9 +349,14 @@ sub equipOnePet(playerName, loadoutType)
       /echo equipOnePet: Creating Spectral Plate
       /call unpackAndGive ${Spawn[${playerName}].Pet.ID} ${petPack_SpectralPlate}
     } 
-
     /if (${Cursor.ID}) {
+      /call ClearCursor
+      /delay 2s !${Bool[${Cursor.ID}]}
       /bc equipOnePet: Something went wrong and something is on your cursor, exiting.
+      /return
+    }
+    /if (!${SpawnCount[pc ${playerName}]} || ${Spawn[pc ${playerName}].Distance} > 100) {
+      /tell ${playerName} It appears you left before I was finished.
       /return
     }
         
@@ -301,7 +397,6 @@ sub equipOnePet(playerName, loadoutType)
             /varset primaryWeapon ${pet_WardWeapon}
 
           } else {
-            /delay 3s
             /bc [${Time}] Invalid primary weapon specified, skipping weapon step.
             /return
           }
@@ -329,7 +424,6 @@ sub equipOnePet(playerName, loadoutType)
             /varset secondaryWeapon ${pet_DrainingBuckler}
 
           } else {
-            /delay 3s
             /bc [${Time}]: Invalid secondary weapon specified, skipping weapon step.
             /return
           }
@@ -356,7 +450,6 @@ sub equipOnePet(playerName, loadoutType)
             /varset secondaryWeapon ${pet_MalaWeapon}
           }
       } else {
-        /delay 3s 
         /bc [${Time}]: Invalid loadout specified, skipping weapon step.
         /return
       }
@@ -500,7 +593,7 @@ sub checkForOpenBagSlot
     /for m 1 to 10
     /for n 1 to 10 
     /if (!${InvSlot[pack${m}].Item.Item[${n}].ID}) {
-      /itemnotify pack${itemInSlotID} leftmouseup
+      /shift /itemnotify pack${itemInSlotID} leftmouseup
       /itemnotify in pack${m} ${n} leftmouseup
       /goto :bagslotcleared
     }
@@ -648,10 +741,11 @@ Sub pet_Setup
 		/if (${Ini[${Character_Ini},Pets,Pet Auto-Shrink (On/Off)].Length}) /call iniToVarV "${Character_Ini},Pets,Pet Auto-Shrink (On/Off)" petAutoShrink bool outer
     /if (${Ini[${Character_Ini},Pets,Pet Summon Combat (On/Off)].Length}) /call iniToVarV "${Character_Ini},Pets,Summon Combat (On/Off)" petSummonCombat bool outer
     /if (${Ini[${Character_Ini},Pets,Pet Buff Combat (On/Off)].Length}) /call iniToVarV "${Character_Ini},Pets,Pet Buff Combat (On/Off)" petBuffCombat bool outer
+    /if (${Ini[${Character_Ini},Pets,Pet Auto Equip (On/Off)].Length}) /call iniToVarV "${Character_Ini},Pets,Pet Auto Equip (On/Off)" petAutoEquip bool outer false
+    /if (${Ini[${Character_Ini},Pets,Pet Auto Loadout].Length}) /call iniToVarV "${Character_Ini},Pets,Pet Auto Loadout" petAutoLoadout string outer
     /if (${Ini[${Character_Ini},Pets,Pet Raid Loadout].Length}) /call iniToVarV "${Character_Ini},Pets,Pet Raid Loadout" petRaidLoadout string outer
     /if (${Ini[${Character_Ini},Pets,Pet DPS Loadout].Length}) /call iniToVarV "${Character_Ini},Pets,Pet DPS Loadout" petDpsLoadout string outer
 		/if (${Ini[${Character_Ini},Pets,Pet HC Loadout].Length}) /call iniToVarV "${Character_Ini},Pets,Pet HC Loadout" petHcLoadout string outer    
-    /if (${Ini[${Character_Ini},Pets,Pet Default Loadout].Length}) /call iniToVarV "${Character_Ini},Pets,Pet Default Loadout" petDefaultLoadout string outer
 	}
 
 	/call pet_spellArrays
@@ -702,10 +796,11 @@ SUB pet_CharacterSettings
     /call WriteToIni "${Character_Ini},Pets,Pet Auto-Shrink (On/Off)" Off
     /call WriteToIni "${Character_Ini},Pets,Pet Summon Combat (On/Off)" Off
     /call WriteToIni "${Character_Ini},Pets,Pet Buff Combat (On/Off)" Off
+    /call WriteToIni "${Character_Ini},Pets,Pet Auto Equip (On/Off)" Off
+    /call WriteToIni "${Character_Ini},Pets,Pet Auto Loadout"
     /call WriteToIni "${Character_Ini},Pets,Pet Raid Loadout"
  		/call WriteToIni "${Character_Ini},Pets,Pet DPS Loadout"
     /call WriteToIni "${Character_Ini},Pets,Pet HC Loadout"
-    /call WriteToIni "${Character_Ini},Pets,Pet Default Loadout"
 	}
 /if (${Debug}) /echo <== pet_CharacterSettings -|
 /RETURN
@@ -746,6 +841,7 @@ Sub pet_Aliases
 |------------------------------------------------------------------------|
 Sub pet_Background_Events
   /doevents equipMyPet
+  /doevents resummonAndGearPet
   /doevents suspendMinion
   /doevents returnMinion
   /doevents shrinkPets
