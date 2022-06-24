@@ -12,7 +12,7 @@
 #event armPets "#1# tells you, 'Arm Pet #2#'"
 #event armPets "#1# tells you, 'Arm Pets #2#'"
 sub event_armPets(line, ChatSender)
-/if (${Debug} || ${Debug_MAG})  /echo event_armPets ==>
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: event_armPets ==>
 
   | For some reason events dont like optional parameters, this is how to get the arguments after 'arm pets' in the tell
   /declare characterToWorkOn string local
@@ -25,12 +25,11 @@ sub event_armPets(line, ChatSender)
     /if (${line.Token[5, ].Length}>0) /varset characterToWorkOn ${line.Token[5, ].Left[-1]}
   }
   
-  /if (${Debug} || ${Debug_MAG}) /echo [${Time}] LoadType: ${loadType}, CharacterToWorkOn: ${characterToWorkOn}
-  /echo [${Time}] LoadType: ${loadType}, CharacterToWorkOn: ${characterToWorkOn}
+  /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: LoadType: ${loadType}, CharacterToWorkOn: ${characterToWorkOn}
 
   /call checkForOpenBagSlot
   /if (!${Macro.Return}) {
-    /echo There was an error getting a bag slot, unable to arm pets.
+    /echo [${Time}]: There was an error getting a bag slot, unable to arm pets.
     /return 
   }
 
@@ -115,7 +114,7 @@ sub event_armPets(line, ChatSender)
     /call armOnePet ${ChatSender} ${loadType} 
   }
 
-  /call findAndDestroyOldSatchels
+  /call destroyOldSummonedPacks
   /if (${FindItemCount[${petPack_SpectralArm}]} > 0) {
     /itemnotify ${petPack_SpectralArm} leftmouseup
   } else {
@@ -125,7 +124,7 @@ sub event_armPets(line, ChatSender)
   /call ClearCursor
   
   /if (${Cursor.ID}) {
-    /bc Arm Pets: Something went wrong and something is on your cursor, exiting.
+    /bc [${Time}]: Arm Pets: Something went wrong and something is on your cursor, exiting.
     /goto :armpetend
   }
 
@@ -144,17 +143,17 @@ sub event_armPets(line, ChatSender)
 #event petGear "<#1#(msg)> Pet Gear"
 #event petGear "<#1#(msg)> Pet Gear #2#"
 sub event_petGear(line, ChatSender)
-/if (${Debug} || ${Debug_MAG}) /echo event_PetGear ==>
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: event_PetGear ==>
 
   /declare quantity int local 1
   
-  /if (${Debug} || ${Debug_MAG}) /echo Line tokens 1 ${line.Token[1, ]}  2: ${line.Token[2, ]} 3: ${line.Token[3, ]} 4: ${line.Token[4, ]} 5:  ${line.Token[5, ]} 6: ${line.Token[6, ]} 7: ${line.Token[7, ]}
+  /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: Line tokens 1 ${line.Token[1, ]}  2: ${line.Token[2, ]} 3: ${line.Token[3, ]} 4: ${line.Token[4, ]} 5:  ${line.Token[5, ]} 6: ${line.Token[6, ]} 7: ${line.Token[7, ]}
   /if (${line.Find[tells you]}) {
     /if (${line.Token[6, ].Length}>0) /varset quantity ${line.Token[6, ]}
   } else /if (${line.Find[msg]}) {
     /if (${line.Token[4, ].Length}>0) /varset quantity ${line.Token[4, ]
   }
-  /if (${Debug} || ${Debug_MAG}) /echo quantity is ${quantity}
+  /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: quantity is ${quantity}
 
   /declare requestorId int local ${Spawn[${ChatSender}].ID}
   /call TrueTarget ${requestorId}
@@ -205,41 +204,41 @@ sub event_petGear(line, ChatSender)
 #event makePetBags "<#1#(msg)> Make Pet Bag#"
 #event makePetBags "<#1#(msg)> Make Pet Bags #2#"
 sub event_makePetBags(line, ChatSender)
-/if (${Debug} || ${Debug_MAG})  /echo event_makePetBags ==>
+/if (${Debug} || ${Debug_MAG})  /echo [${Time}]: event_makePetBags ==>
 
   /if (!${NetBots[${ChatSender}].ID}>0) /return 
 
   /declare quantity int local 1
   
-  /if (${Debug} || ${Debug_MAG}) /echo Line tokens 1 ${line.Token[1, ]}  2: ${line.Token[2, ]} 3: ${line.Token[3, ]} 4: ${line.Token[4, ]} 5:  ${line.Token[5, ]} 6: ${line.Token[6, ]} 7: ${line.Token[7, ]}
+  /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: Line tokens 1 ${line.Token[1, ]}  2: ${line.Token[2, ]} 3: ${line.Token[3, ]} 4: ${line.Token[4, ]} 5:  ${line.Token[5, ]} 6: ${line.Token[6, ]} 7: ${line.Token[7, ]}
   /if (${line.Find[tells you]}) {
     /if (${line.Token[6, ].Length}>0) /varset quantity ${line.Token[6, ]}
   } else /if (${line.Find[msg]}) {
     /if (${line.Token[4, ].Length}>0) /varset quantity ${line.Token[4, ]
   }
-  /if (${Debug} || ${Debug_MAG}) /echo quantity is ${quantity}
-  /bc Making ${quantity} of each pet bag.
+  /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: quantity is ${quantity}
+  /bc [${Time}]: Making ${quantity} of each pet bag.
   
   /call makePetBags_Base ${quantity} ${quantity} ${quantity}
-  /bc Finished making bags.
+  /bc [${Time}]: Finished making bags.
 
   /call memPetGearPreviousSpells
 
-/if (${Debug} || ${Debug_MAG})  /echo <== event_makePetBags
+/if (${Debug} || ${Debug_MAG})  /echo [${Time}]: <== event_makePetBags
 /return
 
 | This tells the mage to restock pet bags in their inventory.
 | Its meant to be an alternative to supply to resummon bags a little faster.
 sub makePetBags_Base(armorBags, heirloomBags, weaponBags)
-/if (${Debug} || ${Debug_MAG}) /echo makePetBags_Base: starting
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: makePetBags_Base: starting
 
-  /echo armorBags: ${armorBags}, heirlooms: ${heirloomBags}, weapons: ${weaponBags}
+  /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: armorBags: ${armorBags}, heirlooms: ${heirloomBags}, weapons: ${weaponBags}
   /if (${armorBags} > 0 || ${heirloomBags} > 0 || ${weaponBags} > 0) /call memPetGearSpells 
 
   /declare i int local
   /for i 1 to 5
   /if (${Cursor.ID}) {
-    /bc Something went wrong and something is on my cursor, exiting.
+    /bc [${Time}]: Something went wrong and something is on my cursor, exiting.
     /return
   }
 
@@ -261,11 +260,12 @@ sub makePetBags_Base(armorBags, heirloomBags, weaponBags)
     /call ClearCursor
   }
   /next i
-/if (${Debug} || ${Debug_MAG}) /echo makePetBags_Base: finished.
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: makePetBags_Base: finished.
 /return
 
+| Loads Pet Gear Spells from ini
 sub getPetGearSpellCfg
-/if (${Debug} || ${Debug_MAG})  /echo getPetGearSpellCfg ==>
+/if (${Debug} || ${Debug_MAG})  /echo [${Time}]: getPetGearSpellCfg ==>
 
   /call IniToArrayV "${Character_Ini},Magician,Pet Gear Spell#" petGearSpellsCfg
   | [PetGearSpell,SpellGem,PreviousSpell]
@@ -273,27 +273,30 @@ sub getPetGearSpellCfg
   
   /declare i int local
   /for i 1 to 3 
-  |/echo should be the pet spell: ${petGearSpellsCfg[${i}].Arg[1,/]}
+  /if (${Debug} || ${Debug_MAG}) /echo should be the pet spell: ${petGearSpellsCfg[${i}].Arg[1,/]}
   /varset petGearSpells[${i},1] ${petGearSpellsCfg[${i}].Arg[1,/]}
+
   /if (${petGearSpellsCfg[${i}].Find[/Gem|]}) {
     /call argueString Gem| "${petGearSpellsCfg[${i}]}"
     /varset petGearSpells[${i},2] ${c_argueString}
-    |/echo should be the gem: ${c_argueString}
+    /if (${Debug} || ${Debug_MAG}) /echo should be the gem: ${c_argueString}
   } else {
     | If no spell gem provided default to gems 5-7
     /varset petGearSpells[${i},2] ${Math.Calc[${i}+4]}
   }
-  |/echo should be whatever is memmed to gem: ${Me.Gem[${petGearSpells[${i},2]}]}
+  
+  /if (${Debug} || ${Debug_MAG}) /echo should be whatever is memmed to gem: ${Me.Gem[${petGearSpells[${i},2]}]}
   /if (${Me.Gem[${petGearSpells[${i},2]}].ID}) {
     /varset petGearSpells[${i},3] ${Me.Gem[${petGearSpells[${i},2]}]}
   }
   /next i
-/if (${Debug} || ${Debug_MAG})  /echo <== getPetGearSpellCfg
+  
+/if (${Debug} || ${Debug_MAG})  /echo [${Time}]: <== getPetGearSpellCfg
 /return 
 
 | Gets current spells on the assigned pet spell gems so they can be re-memmed when finished casting
 sub getCurrentPetSpellGems
-/if (${Debug} || ${Debug_MAG}) /echo getCurrentPetSpellGems ==>
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: getCurrentPetSpellGems ==>
   /if (!${rememAfterPetGearCast}) /return
   /declare i int local
   /for i 1 to 3
@@ -302,38 +305,38 @@ sub getCurrentPetSpellGems
   }
   /next i
 
-/if (${Debug} || ${Debug_MAG}) /echo <== getCurrentPetSpellGems
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: <== getCurrentPetSpellGems
 /return 
 
 sub memPetGearPreviousSpells
-/if (${Debug} || ${Debug_MAG}) /echo memPetGearPreviousSpells ==>
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: memPetGearPreviousSpells ==>
 
   /if (!${rememAfterPetGearCast}) /return
   /declare i int local
   /for i 1 to 3
-  /if (${Debug} || ${Debug_MAG}) /echo memming ${petGearSpells[${i},3]}
+  /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: memming ${petGearSpells[${i},3]}
   /call memorize_spell "${petGearSpells[${i},3]}" ${petGearSpells[${i},2]}
   /next i
-/if (${Debug} || ${Debug_MAG}) /echo <== memPetGearPreviousSpells
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: <== memPetGearPreviousSpells
 /return 
 
 sub memPetGearSpells 
-/if (${Debug} || ${Debug_MAG}) /echo memPetGearSpells ==>
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: memPetGearSpells ==>
   /call getCurrentPetSpellGems
   /declare i int local
   /for i 1 to 3
-  /if (${Debug} || ${Debug_MAG}) /echo calling mem spell. ${petGearSpells[${i},1]} on gem ${petGearSpells[${i},2]}
+  /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: calling mem spell. ${petGearSpells[${i},1]} on gem ${petGearSpells[${i},2]}
 
   /if (!${Me.Gem[${petGearSpells[${i},2]}].Name.Find[${petGearSpells[${i},1]}]}) {
     /call memorize_spell "${petGearSpells[${i},1]}" ${petGearSpells[${i},2]}
   }
   /next i
-/if (${Debug} || ${Debug_MAG}) /echo <== memPetGearSpells
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: <== memPetGearSpells
 /return 
 
 sub armOnePet(playersName, loadoutSelected)
-
-  /bc armOnePet: Working on ${playersName} 's pet with loadout ${loadoutSelected}
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: armOnePet ==>
+  /bc [${Time}]: armOnePet: Working on ${playersName} 's pet with loadout ${loadoutSelected}
   /declare neededArms int local 0
   /declare neededPlates int local 0
   /declare neededHeirlooms int local 0
@@ -354,16 +357,16 @@ sub armOnePet(playersName, loadoutSelected)
   /call makePetBags_Base ${neededPlates} ${neededHeirlooms} ${neededArms} ${Me.Name}
 
   /call equipOnePet ${playersName} ${loadoutSelected}
-  
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: <== armOnePet
 /return 
 
 | A simplified version of equipPet (the old arm pet function) which is only called when we detect pet below lvl 45.
 | Just trying to provide an easy way for new folks to arm their pets.
 sub armLowbiePet(chatSender)
-
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: armLowbiePet ==>
     /if (!${Spawn[${chatSender}].Pet.ID} || ${Spawn[${chatSender}].Pet.Name.Find[familiar]} || !${Spawn[${chatSender}].Pet.Level}>1) /return
     /call getCurrentPetSpellGems
-    /echo arming lower level pet
+    /echo [${Time}]: Arming lower level pet
     /declare primaryWeapon string local
     /declare secondaryWeapon string local 
 
@@ -385,19 +388,19 @@ sub armLowbiePet(chatSender)
     /call makePetBags_Base ${neededPlates} ${neededHeirlooms} ${neededArms} ${Me.Name}
 
     /if (${FindItemCount[${petPack_EnibiksHeirlooms}]} > 0) {
-      /bc Arm Lowbie Pet: Creating Heirlooms
+      /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: Arm Lowbie Pet: Creating Heirlooms
       /call unpackAndGive ${petId} ${petPack_EnibiksHeirlooms}
     } 
     /if (${Cursor.ID}) {
-      /bc Arm Lowbie Pet: Something went wrong and something is on your cursor, exiting.
+      /bc [${Time}]: Arm Lowbie Pet: Something went wrong and something is on your cursor, exiting.
       /return
     }
     /if (${FindItemCount[${petPack_SpectralPlate}]} > 0) {
-      /bc Arm Lowbie Pet: Creating Spectral Plate
+      /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: Arm Lowbie Pet: Creating Spectral Plate
       /call unpackAndGive ${petId} ${petPack_SpectralPlate}
     }
     /if (${Cursor.ID}) {
-      /bc Arm Lowbie Pet: Something went wrong and something is on your cursor, exiting.
+      /bc [${Time}]: Arm Lowbie Pet: Something went wrong and something is on your cursor, exiting.
       /return
     }
 
@@ -440,215 +443,215 @@ sub armLowbiePet(chatSender)
       /echo [${Time}]: armLowbiePet: Could not destroy bag.
       /return
     }
-
+/if (${Debug} || ${Debug_MAG}) /echo [${Time}]: <== armLowbiePet
 /return
 
 
 |----------------------------------------------------------------------------|
 
 |#event petWeapons "#1# tells you, 'Pet Weapon#*#'"
-#event petWeapons "#1# tells you, 'Distribute Pet Weapon#*#'"
-#event petWeapons "<#1#> Pet Weapon#*#"
-#event petWeapons "<#1#> Distribute Pet Weapon#*#"
-sub event_petWeapons(line, ChatSender)
-/if (${Debug} || ${Debug_MAG}) /echo |- event_petWeapons ==>
-  /declare wasFollowing bool local ${Following}
-  /varset Following FALSE
-  /varset Debug_MAG FALSE
-  /declare singlePet bool local TRUE
-  /if (${Defined[petIDArray]}) /deletevar petIDArray
-  /if (${Bool[${line.Find[Distribute]}]}) /varset singlePet FALSE
+| #event petWeapons "#1# tells you, 'Distribute Pet Weapon#*#'"
+| #event petWeapons "<#1#> Pet Weapon#*#"
+| #event petWeapons "<#1#> Distribute Pet Weapon#*#"
+| sub event_petWeapons(line, ChatSender)
+| /if (${Debug} || ${Debug_MAG}) /echo |- event_petWeapons ==>
+|   /declare wasFollowing bool local ${Following}
+|   /varset Following FALSE
+|   /varset Debug_MAG FALSE
+|   /declare singlePet bool local TRUE
+|   /if (${Defined[petIDArray]}) /deletevar petIDArray
+|   /if (${Bool[${line.Find[Distribute]}]}) /varset singlePet FALSE
 
-  /if (!${checkEventArgs[${ChatSender},${line},ZR]}) /return
-  /if (!${Defined[petItems2D]}) {
-    /if (${Debug} || ${Debug_MAG}) /echo I do not have any Pet Items defined...
-    /if (${singlePet} && ${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} I do not have any Pet Items defined...
-  } else /if (!${SpawnCount[${c_eventArgChatSender}]}) {
-    /echo ${c_eventArgChatSender} is not in the zone
-    /if (${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} We are not in the same zone...
-  } else /if (!${singlePet} && !${SpawnCount[pcpet radius 50]}) {
-      /echo There are no PC Pets withing a radius of 50
-      /if (${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} No pets a radius of 50...
-  } else /if (${singlePet} && ${Spawn[${c_eventArgChatSender}].Pet.Distance}>100) {
-      /if (${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} Your pet is not in a radius of 100...
-  } else {
-    /if (!${singlePet} && ${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} Handing out pet weapons...
-    /declare originalLoc string local ${Me.Loc}
-    /declare p int local
-    |if distribute, give to everyone, else just give to the single chatsender
-    /for p 1 to ${SpawnCount[pcpet radius 50]}
-      /if (!${NearestSpawn[${p},pcpet].Name.Find[familiar]}) {
-        |/echo ${p} ${NearestSpawn[${p},pcpet]} ${NearestSpawn[${p},pcpet].Name} ${NearestSpawn[${p},pcpet].Master} ${c_eventArgChatSender}
-        |/echo los ${NearestSpawn[${p},pcpet].LineOfSight} d ${Bool[${line.Find[Distribute]}]}
-        /if (${NearestSpawn[${p},pcpet].LineOfSight}) {
-          /if (!${singlePet}) {
-            /call BuildArray petIDArray ${NearestSpawn[${p},pcpet].ID}
-            |/echo all added ${NearestSpawn[${p},pcpet].Name}-${NearestSpawn[${p},pcpet].Master} ${petIDArray.Size}
-          } else /if (${NearestSpawn[${p},pcpet].Master.CleanName.Equal[${c_eventArgChatSender}]}) {
-            /call BuildArray petIDArray ${NearestSpawn[${p},pcpet].ID}
-            |/echo you added ${NearestSpawn[${p},pcpet].Name}-${NearestSpawn[${p},pcpet].Master} ${petIDArray.Size}
-          }
-        }
-      }
-    /next p
-    /if (${Defined[petIDArray]}) {
-      /if (${Stick.Active}) /squelch /stick off
-      /if (${NetAdvPath.Status}==1) /squelch /netfollow off
-      /call give_PetsWeapons FALSE
-    }
+|   /if (!${checkEventArgs[${ChatSender},${line},ZR]}) /return
+|   /if (!${Defined[petItems2D]}) {
+|     /if (${Debug} || ${Debug_MAG}) /echo I do not have any Pet Items defined...
+|     /if (${singlePet} && ${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} I do not have any Pet Items defined...
+|   } else /if (!${SpawnCount[${c_eventArgChatSender}]}) {
+|     /echo ${c_eventArgChatSender} is not in the zone
+|     /if (${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} We are not in the same zone...
+|   } else /if (!${singlePet} && !${SpawnCount[pcpet radius 50]}) {
+|       /echo There are no PC Pets withing a radius of 50
+|       /if (${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} No pets a radius of 50...
+|   } else /if (${singlePet} && ${Spawn[${c_eventArgChatSender}].Pet.Distance}>100) {
+|       /if (${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} Your pet is not in a radius of 100...
+|   } else {
+|     /if (!${singlePet} && ${c_eventArgChatSender.NotEqual[${Me}]}) /tell ${c_eventArgChatSender} Handing out pet weapons...
+|     /declare originalLoc string local ${Me.Loc}
+|     /declare p int local
+|     |if distribute, give to everyone, else just give to the single chatsender
+|     /for p 1 to ${SpawnCount[pcpet radius 50]}
+|       /if (!${NearestSpawn[${p},pcpet].Name.Find[familiar]}) {
+|         |/echo ${p} ${NearestSpawn[${p},pcpet]} ${NearestSpawn[${p},pcpet].Name} ${NearestSpawn[${p},pcpet].Master} ${c_eventArgChatSender}
+|         |/echo los ${NearestSpawn[${p},pcpet].LineOfSight} d ${Bool[${line.Find[Distribute]}]}
+|         /if (${NearestSpawn[${p},pcpet].LineOfSight}) {
+|           /if (!${singlePet}) {
+|             /call BuildArray petIDArray ${NearestSpawn[${p},pcpet].ID}
+|             |/echo all added ${NearestSpawn[${p},pcpet].Name}-${NearestSpawn[${p},pcpet].Master} ${petIDArray.Size}
+|           } else /if (${NearestSpawn[${p},pcpet].Master.CleanName.Equal[${c_eventArgChatSender}]}) {
+|             /call BuildArray petIDArray ${NearestSpawn[${p},pcpet].ID}
+|             |/echo you added ${NearestSpawn[${p},pcpet].Name}-${NearestSpawn[${p},pcpet].Master} ${petIDArray.Size}
+|           }
+|         }
+|       }
+|     /next p
+|     /if (${Defined[petIDArray]}) {
+|       /if (${Stick.Active}) /squelch /stick off
+|       /if (${NetAdvPath.Status}==1) /squelch /netfollow off
+|       /call give_PetsWeapons FALSE
+|     }
 
-    /if (${Math.Distance[${originalLoc}]}>20) /call MoveToLoc ${originalLoc} 50 20
-    /if (${c_eventArgChatSender.NotEqual[${Me}]}) {
-		/delay 1s
-		/tell ${c_eventArgChatSender} Finished arming pets. If anything is missing, ask for it directly. Ex: "/tell ${Me.CleanName} Grant Spectral Plate".
-	}
-    /varset Following ${wasFollowing}
-  }
-  |/varset Debug_MAG FALSE
-/if (${Debug} || ${Debug_MAG}) /echo <== event_petWeapons -|
-/return
+|     /if (${Math.Distance[${originalLoc}]}>20) /call MoveToLoc ${originalLoc} 50 20
+|     /if (${c_eventArgChatSender.NotEqual[${Me}]}) {
+| 		/delay 1s
+| 		/tell ${c_eventArgChatSender} Finished arming pets. If anything is missing, ask for it directly. Ex: "/tell ${Me.CleanName} Grant Spectral Plate".
+| 	}
+|     /varset Following ${wasFollowing}
+|   }
+|   |/varset Debug_MAG FALSE
+| /if (${Debug} || ${Debug_MAG}) /echo <== event_petWeapons -|
+| /return
 
 
-SUB give_PetsWeapons(autoWeap)
-  /declare p int local
-  /declare w int local
-  /declare allWeapSuccess bool local
-  /declare retryWeapTimer timer local 10s
-  /declare DebugPetWeapons bool local false
+| SUB give_PetsWeapons(autoWeap)
+|   /declare p int local
+|   /declare w int local
+|   /declare allWeapSuccess bool local
+|   /declare retryWeapTimer timer local 10s
+|   /declare DebugPetWeapons bool local false
 
-  /for p 1 to ${petIDArray.Size}
-    |/echo ${p}-${petIDArray[${p}]}-${Spawn[id ${petIDArray[${p}]}].Name}-${Spawn[id ${petIDArray[${p}]}].Master}
-    /if (${SpawnCount[id ${petIDArray[${p}]}]}) {
-      /varset allWeapSuccess TRUE
-      /if (${Spawn[id ${petIDArray[${p}]}].Master.CleanName.NotEqual[${Me}]}) /tell ${Spawn[id ${petIDArray[${p}]}].Master} Incoming pet weapons, hold still!
-      /call TrueTarget ${petIDArray[${p}]}
-      /if (${Target.ID} && ${Target.Distance}>19) /call MoveToLoc ${Target.Y} ${Target.X} 50 15
-        /for w 1 to ${petItems2D.Size[1]}
-          :SummonWeap_Loop
-          /if (${petItems2D[${w},${iCastName}].Equal["Blazing Stone of Demise"]} && ${FindItemCount[=Summoned: Burning Shank]}) {
-            /call SwapItem "Summoned: Burning Shank" "Cursor"
-          } else /if (${Bool[${FindItem[=${petItems2D[${w},${iCastName}]}]}]} && ${Bool[${FindItem[=${petItems2D[${w},${iCastName}]}].NoRent}]}) {
-            /ItemNotify "${petItems2D[${w},${iCastName}]}" leftmouseup
-          } else /if (${Bool[${FindItem[=Summoned: ${petItems2D[${w},${iCastName}]}]}]} && ${Bool[${FindItem[=Summoned: ${petItems2D[${w},${iCastName}]}].NoRent}]}) {
-            /ItemNotify "Summoned: ${petItems2D[${w},${iCastName}]}" leftmouseup
-          } else {
-            /call check_Ready "petItems2D" ${w}
-            /if (${c_Ready}) {
-              /if (${check_Mana["petItems2D",${w}]}) {
-				/if (${DebugPetWeapons}) /echo Item = ${petItems2D[${w},${iCastName}]}
-				/if (${Select[${petItems2D[${w},${iCastName}]},Grant Spectral Plate]}) {
-					/if (${Bool[${FindItem[=Folded Pack of Spectral Plate]}]}) {
-						/ItemNotify "Folded Pack of Spectral Plate" rightmouseup
-					} else {
-						/if (${DebugPetWeapons}) /echo Grant Spectral Plate
-						/tar ${Me}
-						/delay 5s ${Select[${Target},${Me}]}
-						/call e3_Cast ${Me.ID} "petItems2D" ${w}
-						/delay 5s ${Cursor.ID}
-						/autoinventory
-						/if (${Bool[${FindItem[=Folded Pack of Spectral Plate]}]}) {
-							/ItemNotify "Folded Pack of Spectral Plate" rightmouseup
-						}
-					}
-				} else {
-					/call e3_Cast ${Me.ID} "petItems2D" ${w}
-				}
-                /delay 5s ${Cursor.ID}
-              }
-            }
-          }
-          /if (!${Cursor.ID}) {
-            /if (${retryWeapTimer}) {
-              /goto :SummonWeap_Loop
-            } else {
-              /varset allWeapSuccess FALSE
-            }
-          } else /if (${Cursor.ID}) {
-            /call TrueTarget ${petIDArray[${p}]}
-            :OpenTrade_Loop
-            /click left target
-            /delay 1s ${Window[GiveWnd].Open}
-            /if (!${Window[GiveWnd].Open}) {
-              /if (${retryWeapTimer} && ${Cursor.ID}) {
-                /goto :OpenTrade_Loop
-              } else {
-                /echo Failed to open trade with ${Target.CleanName}.
-              }
-            } else {
-              :WaitAccept_Loop
-			  /if (${c_eventArgChatSender.NotEqual[${Me}]}) {
-				/tell ${Spawn[id ${petIDArray[${p}]}].Master} ---Giving "${petItems2D[${w},${iCastName}]}" to ${Spawn[id ${petIDArray[${p}]}].CleanName}.
-			  }
-              /notify GiveWnd GVW_Give_Button LeftMouseUp
-              /delay 1s !${Window[GiveWnd].Open}
-              /if (${Window[GiveWnd].Open}) {
-                /if (${retryWeapTimer}) {
-                  /goto :WaitAccept_Loop
-                } else {
-                  /echo Failed to open trade with ${Target.CleanName}.
-                }
-              }
-            }
-          }
-        /next w
-      /if (${autoWeap} && ${allWeapSuccess}) {
-        /call WriteToIni "${MacroData_Ini},${Me.CleanName}-${MacroQuest.Server},Auto-Pet Weapons-${Spawn[id ${petIDArray[${p}]}].Master}" "${Spawn[id ${petIDArray[${p}]}].CleanName}" 1
-      }
-    }
-  /next p
-/return
-|----------------------------------------------------------------------------|
-SUB check_SummonItems
-/if (${Debug} || ${Debug_MAG}) /echo |- check_SummonItems ==>
-/if (!${Me.CombatState.Equal[COMBAT]}) {
-  /if (${summonMoltenOrb}) {
-    /if (!${Me.Moving} && !${combatTimer} && !${activeTimer} && !${rebuffTimer}) {
-        /if (!${FindItemCount[=Molten Orb]}) {
-          /call check_Ready "moltenOrb2D" 1
-          /if (${c_Ready}) {
-            /if (${check_Mana["moltenOrb2D",1]}) {
-              /call e3_Cast ${Me.ID} "moltenOrb2D" 1
-              /delay 2s ${Cursor.ID}
-              /if (${Cursor.ID}) /call ClearCursor
-            }
-          }
-        }
-    }
-  }
+|   /for p 1 to ${petIDArray.Size}
+|     |/echo ${p}-${petIDArray[${p}]}-${Spawn[id ${petIDArray[${p}]}].Name}-${Spawn[id ${petIDArray[${p}]}].Master}
+|     /if (${SpawnCount[id ${petIDArray[${p}]}]}) {
+|       /varset allWeapSuccess TRUE
+|       /if (${Spawn[id ${petIDArray[${p}]}].Master.CleanName.NotEqual[${Me}]}) /tell ${Spawn[id ${petIDArray[${p}]}].Master} Incoming pet weapons, hold still!
+|       /call TrueTarget ${petIDArray[${p}]}
+|       /if (${Target.ID} && ${Target.Distance}>19) /call MoveToLoc ${Target.Y} ${Target.X} 50 15
+|         /for w 1 to ${petItems2D.Size[1]}
+|           :SummonWeap_Loop
+|           /if (${petItems2D[${w},${iCastName}].Equal["Blazing Stone of Demise"]} && ${FindItemCount[=Summoned: Burning Shank]}) {
+|             /call SwapItem "Summoned: Burning Shank" "Cursor"
+|           } else /if (${Bool[${FindItem[=${petItems2D[${w},${iCastName}]}]}]} && ${Bool[${FindItem[=${petItems2D[${w},${iCastName}]}].NoRent}]}) {
+|             /ItemNotify "${petItems2D[${w},${iCastName}]}" leftmouseup
+|           } else /if (${Bool[${FindItem[=Summoned: ${petItems2D[${w},${iCastName}]}]}]} && ${Bool[${FindItem[=Summoned: ${petItems2D[${w},${iCastName}]}].NoRent}]}) {
+|             /ItemNotify "Summoned: ${petItems2D[${w},${iCastName}]}" leftmouseup
+|           } else {
+|             /call check_Ready "petItems2D" ${w}
+|             /if (${c_Ready}) {
+|               /if (${check_Mana["petItems2D",${w}]}) {
+| 				/if (${DebugPetWeapons}) /echo Item = ${petItems2D[${w},${iCastName}]}
+| 				/if (${Select[${petItems2D[${w},${iCastName}]},Grant Spectral Plate]}) {
+| 					/if (${Bool[${FindItem[=Folded Pack of Spectral Plate]}]}) {
+| 						/ItemNotify "Folded Pack of Spectral Plate" rightmouseup
+| 					} else {
+| 						/if (${DebugPetWeapons}) /echo Grant Spectral Plate
+| 						/tar ${Me}
+| 						/delay 5s ${Select[${Target},${Me}]}
+| 						/call e3_Cast ${Me.ID} "petItems2D" ${w}
+| 						/delay 5s ${Cursor.ID}
+| 						/autoinventory
+| 						/if (${Bool[${FindItem[=Folded Pack of Spectral Plate]}]}) {
+| 							/ItemNotify "Folded Pack of Spectral Plate" rightmouseup
+| 						}
+| 					}
+| 				} else {
+| 					/call e3_Cast ${Me.ID} "petItems2D" ${w}
+| 				}
+|                 /delay 5s ${Cursor.ID}
+|               }
+|             }
+|           }
+|           /if (!${Cursor.ID}) {
+|             /if (${retryWeapTimer}) {
+|               /goto :SummonWeap_Loop
+|             } else {
+|               /varset allWeapSuccess FALSE
+|             }
+|           } else /if (${Cursor.ID}) {
+|             /call TrueTarget ${petIDArray[${p}]}
+|             :OpenTrade_Loop
+|             /click left target
+|             /delay 1s ${Window[GiveWnd].Open}
+|             /if (!${Window[GiveWnd].Open}) {
+|               /if (${retryWeapTimer} && ${Cursor.ID}) {
+|                 /goto :OpenTrade_Loop
+|               } else {
+|                 /echo Failed to open trade with ${Target.CleanName}.
+|               }
+|             } else {
+|               :WaitAccept_Loop
+| 			  /if (${c_eventArgChatSender.NotEqual[${Me}]}) {
+| 				/tell ${Spawn[id ${petIDArray[${p}]}].Master} ---Giving "${petItems2D[${w},${iCastName}]}" to ${Spawn[id ${petIDArray[${p}]}].CleanName}.
+| 			  }
+|               /notify GiveWnd GVW_Give_Button LeftMouseUp
+|               /delay 1s !${Window[GiveWnd].Open}
+|               /if (${Window[GiveWnd].Open}) {
+|                 /if (${retryWeapTimer}) {
+|                   /goto :WaitAccept_Loop
+|                 } else {
+|                   /echo Failed to open trade with ${Target.CleanName}.
+|                 }
+|               }
+|             }
+|           }
+|         /next w
+|       /if (${autoWeap} && ${allWeapSuccess}) {
+|         /call WriteToIni "${MacroData_Ini},${Me.CleanName}-${MacroQuest.Server},Auto-Pet Weapons-${Spawn[id ${petIDArray[${p}]}].Master}" "${Spawn[id ${petIDArray[${p}]}].CleanName}" 1
+|       }
+|     }
+|   /next p
+| /return
+| |----------------------------------------------------------------------------|
+| SUB check_SummonItems
+| /if (${Debug} || ${Debug_MAG}) /echo |- check_SummonItems ==>
+| /if (!${Me.CombatState.Equal[COMBAT]}) {
+|   /if (${summonMoltenOrb}) {
+|     /if (!${Me.Moving} && !${combatTimer} && !${activeTimer} && !${rebuffTimer}) {
+|         /if (!${FindItemCount[=Molten Orb]}) {
+|           /call check_Ready "moltenOrb2D" 1
+|           /if (${c_Ready}) {
+|             /if (${check_Mana["moltenOrb2D",1]}) {
+|               /call e3_Cast ${Me.ID} "moltenOrb2D" 1
+|               /delay 2s ${Cursor.ID}
+|               /if (${Cursor.ID}) /call ClearCursor
+|             }
+|           }
+|         }
+|     }
+|   }
 
-	/if (${autoWeapons} && ${Macro.RunTime} > 10) {
-		/if (!${Me.Moving} && !${combatTimer} && !${activeTimer} && !${rebuffTimer}) {
-			/declare i int local
-      /declare p int local
-      /declare masterName string local
-      /declare petName string local
-      /declare petRace string local
-      /declare petID int local
-      /if (${Defined[petIDArray]}) /deletevar petIDArray
-      /for p 1 to ${SpawnCount[pcpet radius 100]}
-        /varset masterName ${NearestSpawn[${p},pcpet].Master}
-        /varset petName ${NearestSpawn[${p},pcpet].CleanName}
-        /varset petID ${NearestSpawn[${p},pcpet].ID}
-        /varset petRace ${NearestSpawn[${p},pcpet].Race}
-        /if (!${Bool[${petName}]} || !${Bool[${masterName}]} || ${petName.Find[familiar]} || ${petRace.Equal[Gnomework]}) /return
-        /if (${NetBots[${masterName}].ID}) {
-          /if (${Spawn[id ${petID}].LineOfSight}) {
-            /if (${petName.Equal[${Ini[${MacroData_Ini},${Me.CleanName}-${MacroQuest.Server},Auto-Pet Weapons-${masterName}]}]}) {
-						  /if (${Debug} || ${Debug_MAG}) /echo check_SummonItems: I have already given weapons to ${petName}
-					  } else {
-              /call BuildArray petIDArray ${NearestSpawn[${p},pcpet].ID}
-					  }
-				  }
-		    }
-		  /next p
-		  /if (${Defined[petIDArray]}) {
-        /call give_PetsWeapons TRUE
-      }
-	  }
-	}
-}
-/if (${Debug} || ${Debug_MAG}) /echo <== check_SummonItems -|
-/RETURN
+| 	/if (${autoWeapons} && ${Macro.RunTime} > 10) {
+| 		/if (!${Me.Moving} && !${combatTimer} && !${activeTimer} && !${rebuffTimer}) {
+| 			/declare i int local
+|       /declare p int local
+|       /declare masterName string local
+|       /declare petName string local
+|       /declare petRace string local
+|       /declare petID int local
+|       /if (${Defined[petIDArray]}) /deletevar petIDArray
+|       /for p 1 to ${SpawnCount[pcpet radius 100]}
+|         /varset masterName ${NearestSpawn[${p},pcpet].Master}
+|         /varset petName ${NearestSpawn[${p},pcpet].CleanName}
+|         /varset petID ${NearestSpawn[${p},pcpet].ID}
+|         /varset petRace ${NearestSpawn[${p},pcpet].Race}
+|         /if (!${Bool[${petName}]} || !${Bool[${masterName}]} || ${petName.Find[familiar]} || ${petRace.Equal[Gnomework]}) /return
+|         /if (${NetBots[${masterName}].ID}) {
+|           /if (${Spawn[id ${petID}].LineOfSight}) {
+|             /if (${petName.Equal[${Ini[${MacroData_Ini},${Me.CleanName}-${MacroQuest.Server},Auto-Pet Weapons-${masterName}]}]}) {
+| 						  /if (${Debug} || ${Debug_MAG}) /echo check_SummonItems: I have already given weapons to ${petName}
+| 					  } else {
+|               /call BuildArray petIDArray ${NearestSpawn[${p},pcpet].ID}
+| 					  }
+| 				  }
+| 		    }
+| 		  /next p
+| 		  /if (${Defined[petIDArray]}) {
+|         /call give_PetsWeapons TRUE
+|       }
+| 	  }
+| 	}
+| }
+| /if (${Debug} || ${Debug_MAG}) /echo <== check_SummonItems -|
+| /RETURN
 |----------------------------------------------------------------------------|
 #event auto_coh "#1# tells you, 'autocoh #2#'"
 #event auto_coh "<#1#> autocoh #2#"
@@ -749,7 +752,7 @@ SUB MAG_MacroSettings
 	/call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#5" "check_Debuffs" 1
 	/call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#6" "check_Ae" 1
 	/call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#7" "check_Nukes" 1
-	/call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#8" "check_SummonItems" 1
+	|/call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#8" "check_SummonItems" 1
   /call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#9" "check_OrbOfMasteryCharges" 1
   /call WriteToIni "${advSettings_Ini},MAG Functions,MAG Function#10" "check_Food" 1
 /if (${Debug}) /echo <== MAG_MacroSettings -|

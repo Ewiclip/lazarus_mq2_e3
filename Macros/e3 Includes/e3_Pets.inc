@@ -190,7 +190,7 @@ SUB event_returnMinion(line, ChatSender)
 #event equipMyPet "#1# tells you, 'Equip Pet'"
 #event equipMyPet "#1# tells you, 'Equip Pet #2#'"
 sub event_equipMyPet(line, ChatSender)
-/if (${Debug} || ${Debug_Pets}) /echo equipMyPet ==>
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: equipMyPet ==>
 
   /if (!${NetBots[${ChatSender}].ID}>0) /return 
 
@@ -203,16 +203,16 @@ sub event_equipMyPet(line, ChatSender)
     /varset loadType ${petHcLoadout}
   } else {
       /if (${line.Find[tells you]}) {
-        /if (${line.Token[6, ].Length}>0) /varset newLoadOut ${line.Token[6, ].Left[-1]}
+        /if (${line.Token[6, ].Length}>0) /varset loadType ${line.Token[6, ].Left[-1]}
     } else {
-        /if (${line.Token[4, ].Length}>0) /varset newLoadOut ${line.Token[4, ].Left[-1]}
+        /if (${line.Token[4, ].Length}>0) /varset loadType ${line.Token[4, ].Left[-1]}
     }
   }
-  /if (${Debug} || ${Debug_Pets}) /echo equipMyPet: loadType is ${loadType} and line is ${line}
-  /echo equipMyPet: loadType is ${loadType} and line is ${line}
+  /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: equipMyPet: loadType is ${loadType} and line is ${line}
+
   /call equipMyPet ${loadType}
 
-/if (${Debug} || ${Debug_Pets}) /echo <== equipMyPet
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== equipMyPet
 /return 
 
 |------------------------------------------------------------|
@@ -221,8 +221,8 @@ sub event_equipMyPet(line, ChatSender)
 #event resummonAndGearPet "[#1#(msg)] New Pet #2#"
 #event resummonAndGearPet "#1# tells you, 'New Pet #2#'"
 sub event_resummonAndGearPet(line, ChatSender)
-/if (${Debug} || ${Debug_Pets}) /echo resummonAndGearPet ==>
-
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: resummonAndGearPet ==>
+  | Prevents other players from killing your pet
   /if (!${NetBots[${ChatSender}].ID}>0) /return 
   /declare newLoadOut string local
   /if (${line.Find[raid]}) {
@@ -240,23 +240,23 @@ sub event_resummonAndGearPet(line, ChatSender)
   }
   
   /if (!${newLoadOut.Length}>0) {
-    /bc Resummon Pet: No loadout was specified, exiting.
+    /bc [${Time}]: No loadout was specified, exiting.
     /return
   }
   /if (!(${FindItemCount[${petPack_EnibiksHeirlooms}]} > 0)) {
-    /bc I do not have a ${petPack_EnibiksHeirlooms} to give to pet. Cancelling.
+    /bc [${Time}]: I do not have a ${petPack_EnibiksHeirlooms} to give to pet. Cancelling.
     /return
   }
   /if (!(${FindItemCount[${petPack_SpectralPlate}]} > 0)) {
-    /bc I do not have a ${petPack_SpectralPlate} to give to pet. Cancelling.
+    /bc [${Time}]: I do not have a ${petPack_SpectralPlate} to give to pet. Cancelling.
     /return
   }
   /if (!(${FindItemCount[${petPack_SpectralArm}]} > 0)) {
-    /bc I do not have a ${petPack_SpectralArm} to give to pet. Cancelling.
+    /bc [${Time}]: I do not have a ${petPack_SpectralArm} to give to pet. Cancelling.
     /return
   }
 
-  /if (${Debug} || ${Debug_Pets}) /echo resummonAndGearPet: new load out is ${newLoadOut} and line is ${line}
+  /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: resummonAndGearPet: new load out is ${newLoadOut} and line is ${line}
 
   /declare autoEquipEnabled bool local ${petAutoEquip}
   /if (${petAutoEquip}) /varset petAutoEquip false
@@ -265,22 +265,23 @@ sub event_resummonAndGearPet(line, ChatSender)
   /call equipMyPet ${newLoadOut}
   /if (${autoEquipEnabled}) /varset petAutoEquip true
 
-/if (${Debug} || ${Debug_Pets}) /echo <== resummonAndGearPet
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== resummonAndGearPet
 /return
 
 sub equipMyPet(loadoutName)
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: equipMyPet ==>
   /call checkForOpenBagSlot
   /if (!${Macro.Return}) {
-    /bc There was an error getting a bag slot, unable to arm pets.
+    /bc [${Time}]: There was an error getting a bag slot, unable to arm pets.
     /return 
   }
 
-  /bc Attempting to equip my pet with ${loadoutName} load out.
+  /bc [${Time}]: Attempting to equip my pet with ${loadoutName} load out.
   /call equipOnePet ${Me.Name} ${loadoutName}
-  /call findAndDestroyOldSatchels
+  /call destroyOldSummonedPacks
 
   /if (!(${FindItemCount[${petPack_EnibiksHeirlooms}]} > 0) || !(${FindItemCount[${petPack_SpectralPlate}]} > 0) || !(${FindItemCount[${petPack_SpectralArm}]} > 0)) {
-    /bc I am out of one or more Mage folded packs and will need more to equip my next pet. 
+    /bc [${Time}]: I am out of one or more Mage folded packs and will need more to equip my next pet. 
   } 
 
   | Try to put a folded pack in the bag slot to placehold it.
@@ -293,29 +294,31 @@ sub equipMyPet(loadoutName)
   }
   /call ClearCursor
   
-  /bc Finished Equiping my pet. Remaining packs - Heirloom: ${FindItemCount[${petPack_EnibiksHeirlooms}]}, Plate: ${FindItemCount[${petPack_SpectralPlate}]}, Arm: ${FindItemCount[${petPack_SpectralArm}]}
+  /bc [${Time}]: Finished Equiping my pet. Remaining packs - Heirloom: ${FindItemCount[${petPack_EnibiksHeirlooms}]}, Plate: ${FindItemCount[${petPack_SpectralPlate}]}, Arm: ${FindItemCount[${petPack_SpectralArm}]}
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== equipMyPet 
 /return 
 
 |------------------------------------------------------------|
+| Gives armor, heirlooms and weapons to pet. Also used by Mages for Arm Pet.
 sub equipOnePet(playerName, loadoutType)
-
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: equipOnePet ==>
     /if (!${Spawn[${playerName}].Pet.ID} || ${Spawn[${playerName}].Pet.Name.Find[familiar]} || !${Spawn[${playerName}].Pet.Level}>1) /return
 
     /if (${Spawn[${playerName}].Pet.Distance}>50) {
-      /echo [${Time}]: Pet is too far away.
+      /echo [${Time}]: equipOnePet: Pet is too far away.
       /return
     }
 
     /if (!(${FindItemCount[${petPack_EnibiksHeirlooms}]} > 0)) {
-      /bc equipOnePet: I do not have a ${petPack_EnibiksHeirlooms} to give to pet.
+      /bc [${Time}]: equipOnePet: I do not have a ${petPack_EnibiksHeirlooms} to give to pet.
       /return
     }
     /if (!(${FindItemCount[${petPack_SpectralPlate}]} > 0)) {
-      /bc equipOnePet: I do not have a ${petPack_SpectralPlate} to give to pet.
+      /bc [${Time}]: equipOnePet: I do not have a ${petPack_SpectralPlate} to give to pet.
       /return
     }
     /if (!(${FindItemCount[${petPack_SpectralArm}]} > 0)) {
-      /bc equipOnePet: I do not have a ${petPack_SpectralArm} to give to pet.
+      /bc [${Time}]: equipOnePet: I do not have a ${petPack_SpectralArm} to give to pet.
       /return
     }
 
@@ -331,13 +334,13 @@ sub equipOnePet(playerName, loadoutType)
     /declare secondaryWeapon string local 
 
     /if (${FindItemCount[${petPack_EnibiksHeirlooms}]} > 0) {
-      /echo equipOnePet: Creating Heirlooms
+      /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: equipOnePet: Creating Heirlooms
       /call unpackAndGive ${Spawn[${playerName}].Pet.ID} ${petPack_EnibiksHeirlooms}
     } 
     /if (${Cursor.ID}) {
       /call ClearCursor
       /delay 2s !${Bool[${Cursor.ID}]}
-      /bc equipOnePet: Something went wrong and something is on your cursor, exiting.
+      /bc [${Time}]: equipOnePet: Something went wrong and something is on your cursor, exiting.
       /return
     }
     /if (!${SpawnCount[pc ${playerName}]} || ${Spawn[pc ${playerName}].Distance} > 100) {
@@ -346,13 +349,13 @@ sub equipOnePet(playerName, loadoutType)
     }
 
     /if (${FindItemCount[${petPack_SpectralPlate}]} > 0) {
-      /echo equipOnePet: Creating Spectral Plate
+      /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: equipOnePet: Creating Spectral Plate
       /call unpackAndGive ${Spawn[${playerName}].Pet.ID} ${petPack_SpectralPlate}
     } 
     /if (${Cursor.ID}) {
       /call ClearCursor
       /delay 2s !${Bool[${Cursor.ID}]}
-      /bc equipOnePet: Something went wrong and something is on your cursor, exiting.
+      /bc [${Time}]: equipOnePet: Something went wrong and something is on your cursor, exiting.
       /return
     }
     /if (!${SpawnCount[pc ${playerName}]} || ${Spawn[pc ${playerName}].Distance} > 100) {
@@ -366,12 +369,12 @@ sub equipOnePet(playerName, loadoutType)
       /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: loadoutType: ${loadoutType}
 
       /if (${loadoutType.Find[,]} || ${loadoutType.Find[2]}) {
-        |/echo [${Time}]: Token1 ${loadoutType.Token[1,,]} Token2 ${loadoutType.Token[2,,]} 
+        /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: Loadout Token1 ${loadoutType.Token[1,,]} Token2 ${loadoutType.Token[2,,]} 
         /declare firstItem string local
         /declare secondItem string local
 
         /if (${loadoutType.Find[2]}) {
-          |/echo [${Time}]: Setting loadout type for same primary/secondary: ${loadoutType},${loadoutType}
+          /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: Setting loadout type for same primary/secondary: ${loadoutType},${loadoutType}
           /varset loadoutType ${loadoutType},${loadoutType}
         }
         
@@ -397,7 +400,7 @@ sub equipOnePet(playerName, loadoutType)
             /varset primaryWeapon ${pet_WardWeapon}
 
           } else {
-            /bc [${Time}] Invalid primary weapon specified, skipping weapon step.
+            /bc [${Time}]: Invalid primary weapon specified, skipping weapon step.
             /return
           }
         }
@@ -444,7 +447,7 @@ sub equipOnePet(playerName, loadoutType)
           } else {
             |When its any other class with pet
             |/echo [${Time}]: loadoutType: ${loadoutType}
-            /echo equipOnePet: Doing Default ${char_class} loadout
+            /echo [${Time}]: equipOnePet: Doing Default ${char_class} loadout
             
             /varset primaryWeapon ${pet_DispelWeapon}
             /varset secondaryWeapon ${pet_MalaWeapon}
@@ -454,14 +457,15 @@ sub equipOnePet(playerName, loadoutType)
         /return
       }
 
-      /echo Equip Pet: Selected Weapons are ${primaryWeapon} and ${secondaryWeapon}
+      /echo [${Time}]: Equip Pet: Selected Weapons are ${primaryWeapon} and ${secondaryWeapon}
 
       /call unpackAndSelect ${Spawn[${playerName}].Pet.ID} ${petPack_SpectralArm} ${primaryWeapon} ${secondaryWeapon}
     } 
-    
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== equipOnePet
 /return
 
 sub unpackAndSelect(targetID, ItemName, primaryItem, secondaryItem)
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: unpackAndSelect ==>
 
     /if (${FindItemCount[${ItemName}]} > 0) {
         |/echo [${Time}]: unfolding the bag to cursor
@@ -471,7 +475,7 @@ sub unpackAndSelect(targetID, ItemName, primaryItem, secondaryItem)
         /delay 3s !${Bool[${Cursor.ID}]}
         /delay 1s
     } else {
-      /bc I do not have a ${ItemName} to equip pet
+      /bc [${Time}]: I do not have a ${ItemName} to equip pet
       /return
     }
 
@@ -506,7 +510,7 @@ sub unpackAndSelect(targetID, ItemName, primaryItem, secondaryItem)
           /return
         }
         /if (!${FindItemCount[${ItemName}]} > 0) {
-          /bc I do not have a ${ItemName} to give pet secondary ${secondaryWeapon}
+          /bc [${Time}]: I do not have a ${ItemName} to give pet secondary ${secondaryWeapon}
           /return 
         }
         /if (${FindItemCount[${ItemName}]} > 0) {
@@ -545,11 +549,12 @@ sub unpackAndSelect(targetID, ItemName, primaryItem, secondaryItem)
       /echo [${Time}]: unpackAndSelect: Could not destroy bag.
       /return
     }
-
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== unpackAndSelect
 /return
 
 
 sub checkForOpenBagSlot
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: checkForOpenBagSlot ==>
   |first check that we have an empty slot
   /declare BackSlotThatIsOpen int 0
   /declare itemInSlotID int local 0
@@ -571,7 +576,7 @@ sub checkForOpenBagSlot
 
   } else /if (${InvSlot[pack${i}].Item.Name.Equal[${pet_PhantomSatchel}]} || ${InvSlot[pack${i}].Item.Name.Equal[${pet_QuelliousPouch}]}) {
 
-    /call findAndDestroyOldSatchels
+    /call destroyOldSummonedPacks
     /if (!${Bool[${InvSlot[pack${i}].Item.ID}]}) {
       |/echo Pack slot ${i}
       /varset BackSlotThatIsOpen ${i}
@@ -615,16 +620,17 @@ sub checkForOpenBagSlot
     /bc [${Time}]: checkForOpenBagSlot: No empty bag slot on toon. Exiting.
     /return false
   } 
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== checkForOpenBagSlot
 /return true
 
 
-sub findAndDestroyOldSatchels
-
+sub destroyOldSummonedPacks
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: destroyOldSummonedPacks ==>
     /echo [${Time}]: Finding and destroying opened summoned packs
     | Just in case mage has been looting and items ended up in an old phantom pack
     /call ClearCursor
     /if (${Cursor.ID}) {
-      /echo [${Time}]: findAndDestroyOldSatchels: Unable to clear cursor.
+      /bc [${Time}]: destroyOldSummonedPacks: Unable to clear cursor.
       /return
     }
     /declare m int local
@@ -634,11 +640,11 @@ sub findAndDestroyOldSatchels
       /for n 1 to 10
       |/echo Item ${InvSlot[pack${m}].Item.Item[${n}].Name}
       /if (!${InvSlot[pack${m}].Item.Item[${n}].NoRent} && ${InvSlot[pack${m}].Item.Item[${n}].ID} > 0) {
-        /echo [${Time}]: findAndDestroyOldSatchels: Non-Temporary Item ${InvSlot[pack${m}].Item.Item[${n}]} found in ${InvSlot[pack${m}].Item.Name}.
+        /bc [${Time}]: destroyOldSummonedPacks: Non-Temporary Item ${InvSlot[pack${m}].Item.Item[${n}]} found in ${InvSlot[pack${m}].Item.Name}.
         /return
       }      
       /if (${InvSlot[pack${m}].Item.Item[${n}].NoRent} && (!${InvSlot[pack${m}].Item.Item[${n}].Name.Find[Enibik]} && !${InvSlot[pack${m}].Item.Item[${n}].Name.Find[Spectral]} && !${InvSlot[pack${m}].Item.Item[${n}].Name.Find[Summoned]})) {
-        /echo [${Time}]: findAndDestroyOldSatchels: Unknown temporary item ${InvSlot[pack${m}].Item.Item[${n}]} found in ${InvSlot[pack${m}].Item.Name}.
+        /bc [${Time}]: destroyOldSummonedPacks: Unknown temporary item ${InvSlot[pack${m}].Item.Item[${n}]} found in ${InvSlot[pack${m}].Item.Name}.
         /return 
       }
 
@@ -648,17 +654,17 @@ sub findAndDestroyOldSatchels
         /destroy
         /delay 1s
         /if (${Cursor.ID}) {
-          /echo [${Time}]: findAndDestroyOldSatchels: Unable to clear bagslot.
+          /bc [${Time}]: destroyOldSummonedPacks: Unable to clear bagslot.
           /return
         }
       }
     }
     /next m
-
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== destroyOldSummonedPacks
 /return
 
 sub unpackAndGive(targetID, ItemName)
-
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: unpackAndGive ==>
     /if (${FindItemCount[${ItemName}]} > 0) {
       |/echo ItemFound: ${ItemName}
       /itemnotify "${ItemName}" leftmouseup
@@ -679,12 +685,12 @@ sub unpackAndGive(targetID, ItemName)
       /echo [${Time}]: unpackAndGive: Something went wrong and something is on your cursor, exiting.
       /return
     }
-
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== unpackAndGive
 /return
 
 
 sub targetMoveAndGive(petId)
-
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: targetMoveAndGive ==>
     /call TrueTarget ${petId}
     /if (${Target.ID} && ${Target.Distance}<50) {
       /call MoveToLoc ${Target.Y} ${Target.X} 50 15
@@ -693,12 +699,12 @@ sub targetMoveAndGive(petId)
       /echo [${Time}]: Pet is too far away.
       /return
     }
-
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== targetMoveAndGive
 /return 
 
 
 sub giveItemOnCursorToTarget()
-
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: giveItemOnCursorToTarget ==>
     /if (${Defined[retryWeapTimer]}) /deletevar retryWeapTimer
     /declare retryWeapTimer timer local 10s
 
@@ -725,6 +731,7 @@ sub giveItemOnCursorToTarget()
         }
       }
     }
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== giveItemOnCursorToTarget
 /return
 
 
