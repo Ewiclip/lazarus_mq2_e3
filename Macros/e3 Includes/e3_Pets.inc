@@ -124,7 +124,7 @@ SUB buffPet
 	|removing ${Spell[${petBuffs2D[${s},${iSpellName}]}].StacksPet} for now as balikor's mark reports non-stacking
   /if (!${Bool[${Me.PetBuff[${petBuffs2D[${s},${iSpellName}]}]}]} && !${Bool[${Me.PetBuff[${petBuffs2D[${s},${iCheckFor}]}]}]} && !${Defined[nht${petBuffs2D[${s},${iCastID}]}]}) {
     /call check_Ready "petBuffs2D" ${s}
-    /if (${c_Ready}) {
+    /if (${c_Ready} && ${petBuffs2D[${s},${iIfs}]}) {
       /if (${Me.Pet.Distance} < ${petBuffs2D[${s},${iMyRange}]}) {
         /if (${check_Mana["petBuffs2D",${s}]}) {
           /if (${petBuffs2D[${s},${iSpellName}].NotEqual[Growl of the Panther]} || !${Bool[${Me.Song[Growl of the Panther]}]}) {
@@ -268,6 +268,7 @@ sub event_resummonAndGearPet(line, ChatSender)
 /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== resummonAndGearPet
 /return
 
+|------------------------------------------------------------|
 sub equipMyPet(loadoutName)
 /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: equipMyPet ==>
   /call checkForOpenBagSlot
@@ -278,7 +279,7 @@ sub equipMyPet(loadoutName)
 
   /bc [${Time}]: Attempting to equip my pet with ${loadoutName} load out.
   /call equipOnePet ${Me.Name} ${loadoutName}
-  /call destroyOldSummonedPacks
+  /call cleanupSummonedPacks
 
   /if (!(${FindItemCount[${petPack_EnibiksHeirlooms}]} > 0) || !(${FindItemCount[${petPack_SpectralPlate}]} > 0) || !(${FindItemCount[${petPack_SpectralArm}]} > 0)) {
     /bc [${Time}]: I am out of one or more Mage folded packs and will need more to equip my next pet. 
@@ -294,7 +295,8 @@ sub equipMyPet(loadoutName)
   }
   /call ClearCursor
   
-  /bc [${Time}]: Finished Equiping my pet. Remaining packs - Heirloom: ${FindItemCount[${petPack_EnibiksHeirlooms}]}, Plate: ${FindItemCount[${petPack_SpectralPlate}]}, Arm: ${FindItemCount[${petPack_SpectralArm}]}
+  /bc [${Time}]: Finished Equiping my pet. 
+  /bc Remaining packs - Heirloom: ${FindItemCount[${petPack_EnibiksHeirlooms}]}, Plate: ${FindItemCount[${petPack_SpectralPlate}]}, Arm: ${FindItemCount[${petPack_SpectralArm}]}
 /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== equipMyPet 
 /return 
 
@@ -576,7 +578,7 @@ sub checkForOpenBagSlot
 
   } else /if (${InvSlot[pack${i}].Item.Name.Equal[${pet_PhantomSatchel}]} || ${InvSlot[pack${i}].Item.Name.Equal[${pet_QuelliousPouch}]}) {
 
-    /call destroyOldSummonedPacks
+    /call cleanupSummonedPacks
     /if (!${Bool[${InvSlot[pack${i}].Item.ID}]}) {
       |/echo Pack slot ${i}
       /varset BackSlotThatIsOpen ${i}
@@ -596,7 +598,7 @@ sub checkForOpenBagSlot
     /declare m int local 1
     /declare n int local 1
     /for m 1 to 10
-    /for n 1 to 10 
+    /for n 1 to ${InvSlot[pack${m}].Item.Container}
     /if (!${InvSlot[pack${m}].Item.Item[${n}].ID}) {
       /shift /itemnotify pack${itemInSlotID} leftmouseup
       /itemnotify in pack${m} ${n} leftmouseup
@@ -606,8 +608,8 @@ sub checkForOpenBagSlot
     /next m
     :bagslotcleared
     /if (${Cursor.ID}) {
-      |/bc Equip: Unable to clear bagslot. Exiting
-      /goto :armpetend
+      /bc checkForOpenBagSlot: Unable to clear bagslot. Exiting
+      /return
     }
     /if (${Bool[${InvSlot[pack${itemInSlotID}].Item.ID}]}) {
       /bc [${Time}]: checkForOpenBagSlot: Bag slot not cleared. Exiting
@@ -624,44 +626,97 @@ sub checkForOpenBagSlot
 /return true
 
 
-sub destroyOldSummonedPacks
-/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: destroyOldSummonedPacks ==>
+sub cleanupSummonedPacks
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: cleanupSummonedPacks ==>
     /echo [${Time}]: Finding and destroying opened summoned packs
     | Just in case mage has been looting and items ended up in an old phantom pack
     /call ClearCursor
     /if (${Cursor.ID}) {
-      /bc [${Time}]: destroyOldSummonedPacks: Unable to clear cursor.
+      /bc [${Time}]: cleanupSummonedPacks: Unable to clear cursor.
       /return
     }
+    /declare okToDestroy bool local false
     /declare m int local
     /declare n int local
     /for m 1 to 10
     /if (${InvSlot[pack${m}].Item.Name.Equal[${pet_PhantomSatchel}]} || ${InvSlot[pack${m}].Item.Name.Equal[${pet_QuelliousPouch}]}) {
+      /varset okToDestroy true
       /for n 1 to 10
-      |/echo Item ${InvSlot[pack${m}].Item.Item[${n}].Name}
-      /if (!${InvSlot[pack${m}].Item.Item[${n}].NoRent} && ${InvSlot[pack${m}].Item.Item[${n}].ID} > 0) {
-        /bc [${Time}]: destroyOldSummonedPacks: Non-Temporary Item ${InvSlot[pack${m}].Item.Item[${n}]} found in ${InvSlot[pack${m}].Item.Name}.
-        /return
-      }      
-      /if (${InvSlot[pack${m}].Item.Item[${n}].NoRent} && (!${InvSlot[pack${m}].Item.Item[${n}].Name.Find[Enibik]} && !${InvSlot[pack${m}].Item.Item[${n}].Name.Find[Spectral]} && !${InvSlot[pack${m}].Item.Item[${n}].Name.Find[Summoned]})) {
-        /bc [${Time}]: destroyOldSummonedPacks: Unknown temporary item ${InvSlot[pack${m}].Item.Item[${n}]} found in ${InvSlot[pack${m}].Item.Name}.
-        /return 
+      /if (!${IsItemSummoned[${InvSlot[pack${m}].Item.Item[${n}]}]}) {
+        /bc Item found that is not summoned: ${InvSlot[pack${m}].Item.Item[${n}]}. Unable to clear bag slot to equip pets.
+        /varset okToDestroy false
+        /goto :bagCheckFinished
       }
-
       /next n
-      /itemnotify pack${m} leftmouseup
-      /if (${Cursor.Name.Find[${pet_PhantomSatchel}]} || ${Cursor.Name.Find[${pet_QuelliousPouch}]}) {
-        /destroy
-        /delay 1s
-        /if (${Cursor.ID}) {
-          /bc [${Time}]: destroyOldSummonedPacks: Unable to clear bagslot.
-          /return
+
+      /if (${okToDestroy}) {
+        /itemnotify pack${m} leftmouseup
+        /if (${Cursor.Name.Find[${pet_PhantomSatchel}]} || ${Cursor.Name.Find[${pet_QuelliousPouch}]}) {
+          /destroy
+          /delay 1s
+          /if (${Cursor.ID}) {
+            /bc [${Time}]: cleanupSummonedPacks: Unable to clear bag slot.
+            /return
+          }
         }
       }
     }
     /next m
-/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== destroyOldSummonedPacks
+    :bagCheckFinished
+/if (${Debug} || ${Debug_Pets}) /echo [${Time}]: <== cleanupSummonedPacks
 /return
+
+SUB IsItemSummoned(ItemName)
+
+  /if (${ItemName.Equal[Summoned: Buckler of Draining Defense]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Summoned: Fist of Flame]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Summoned: Orb of Chilling Water]}) {
+    /RETURN True
+  } else /if (${ItemName.Equal[Summoned: Short Sword of Warding]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Summoned: Mace of Temporal Distortion]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Summoned: Spear of Maliciousness]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Summoned: Wand of Dismissal]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Summoned: Tendon Carver]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Enibik's Satin Choker]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Enibik's Woven Shawl]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Enibik's Linked Bracelet]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Summoned: Visor of Vabtik]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Enibik's Jade Bracelet]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Enibik's Gold Ring]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Enibik's Ridged Earhoop]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Spectral Plate Helm]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Spectral Plate Vambraces]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Spectral Plate Gauntlets]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Spectral Plate Boots]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Spectral Plate Bracers]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Spectral Plate Breastplate]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Spectral Plate Greaves]}) {
+   /RETURN True
+  } else /if (${ItemName.Equal[Summoned: Spectral Belt]}) {
+   /RETURN True
+  }
+
+/RETURN
 
 sub unpackAndGive(targetID, ItemName)
 /if (${Debug} || ${Debug_Pets}) /echo [${Time}]: unpackAndGive ==>

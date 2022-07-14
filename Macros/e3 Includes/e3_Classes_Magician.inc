@@ -114,7 +114,7 @@ sub event_armPets(line, ChatSender)
     /call armOnePet ${ChatSender} ${loadType} 
   }
 
-  /call destroyOldSummonedPacks
+  /call cleanupSummonedPacks
   /if (${FindItemCount[${petPack_SpectralArm}]} > 0) {
     /itemnotify ${petPack_SpectralArm} leftmouseup
   } else {
@@ -137,7 +137,7 @@ sub event_armPets(line, ChatSender)
 /if (${Debug} || ${Debug_MAG}) /echo <== event_armPets -|
 /return
 
-
+|------------------------------------------------------------|
 #event petGear "#1# tells you, 'Pet Gear'"
 #event petGear "#1# tells you, 'Pet Gear #2#'"
 #event petGear "<#1#(msg)> Pet Gear"
@@ -198,7 +198,7 @@ sub event_petGear(line, ChatSender)
 /if (${Debug} || ${Debug_MAG}) /echo <== event_PetGear
 /return
 
-
+|------------------------------------------------------------|
 #event makePetBags "#1# tells you, 'Make Pet Bag#'"
 #event makePetBags "#1# tells you, 'Make Pet Bags #2#'"
 #event makePetBags "<#1#(msg)> Make Pet Bag#"
@@ -227,7 +227,8 @@ sub event_makePetBags(line, ChatSender)
 /if (${Debug} || ${Debug_MAG})  /echo [${Time}]: <== event_makePetBags
 /return
 
-| This tells the mage to restock pet bags in their inventory.
+|------------------------------------------------------------|
+| This is used by the mage to restock pet bags in their inventory.
 | Its meant to be an alternative to supply to resummon bags a little faster.
 sub makePetBags_Base(armorBags, heirloomBags, weaponBags)
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: makePetBags_Base: starting
@@ -263,6 +264,7 @@ sub makePetBags_Base(armorBags, heirloomBags, weaponBags)
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: makePetBags_Base: finished.
 /return
 
+|------------------------------------------------------------|
 | Loads Pet Gear Spells from ini
 sub getPetGearSpellCfg
 /if (${Debug} || ${Debug_MAG})  /echo [${Time}]: getPetGearSpellCfg ==>
@@ -294,6 +296,8 @@ sub getPetGearSpellCfg
 /if (${Debug} || ${Debug_MAG})  /echo [${Time}]: <== getPetGearSpellCfg
 /return 
 
+
+|------------------------------------------------------------|
 | Gets current spells on the assigned pet spell gems so they can be re-memmed when finished casting
 sub getCurrentPetSpellGems
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: getCurrentPetSpellGems ==>
@@ -308,6 +312,8 @@ sub getCurrentPetSpellGems
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: <== getCurrentPetSpellGems
 /return 
 
+
+|------------------------------------------------------------|
 sub memPetGearPreviousSpells
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: memPetGearPreviousSpells ==>
 
@@ -320,6 +326,8 @@ sub memPetGearPreviousSpells
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: <== memPetGearPreviousSpells
 /return 
 
+
+|------------------------------------------------------------|
 sub memPetGearSpells 
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: memPetGearSpells ==>
   /call getCurrentPetSpellGems
@@ -334,6 +342,8 @@ sub memPetGearSpells
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: <== memPetGearSpells
 /return 
 
+
+|------------------------------------------------------------|
 sub armOnePet(playersName, loadoutSelected)
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: armOnePet ==>
   /bc [${Time}]: armOnePet: Working on ${playersName} 's pet with loadout ${loadoutSelected}
@@ -360,6 +370,8 @@ sub armOnePet(playersName, loadoutSelected)
 /if (${Debug} || ${Debug_MAG}) /echo [${Time}]: <== armOnePet
 /return 
 
+
+|------------------------------------------------------------|
 | A simplified version of equipPet (the old arm pet function) which is only called when we detect pet below lvl 45.
 | Just trying to provide an easy way for new folks to arm their pets.
 sub armLowbiePet(chatSender)
