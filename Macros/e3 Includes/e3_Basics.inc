@@ -1391,9 +1391,6 @@ SUB EVENT_groupUp(line, ChatSender, createGroup)
 /if (${Debug}) /echo |- EVENT_groupUp ==>
   /if (!${checkEventArgs[${ChatSender},${line},U,${createGroup}]}) /return
   /if (${c_eventArgChatSender.Equal[${Me.Name}]}) {
-    /squelch /bca //raiddisband
-    /squelch /bca //disband
-    /delay 5
     /if (${Raid.Members}) /raiddisband
   }
   /delay 5
@@ -1413,6 +1410,18 @@ SUB EVENT_groupUp(line, ChatSender, createGroup)
       /echo Recalling [${groupName}]...
       /echo [${Time}] Delaying up to 1.5 second(s) in EVENT_groupUp
       /delay 15
+      | Disband members only if they are part of this group
+      /for e 1 to 5
+      /varset groupMembers[${e}] ${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#${e}]}
+      /if (${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#${e}].NotEqual[PLACEHOLDER]}) {
+        /varcalc groupSize ${groupSize}+1
+        | -Alert PC of incoming group invite.
+	/squelch /bct ${groupMembers[${e}]} //raiddisband
+	/squelch /bct ${groupMembers[${e}]} //disband
+      }
+      /next e
+      /delay 5
+	  
       | Invite group members while ignoring placeholders, and set
       /for e 1 to 5
       /varset groupMembers[${e}] ${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#${e}]}
