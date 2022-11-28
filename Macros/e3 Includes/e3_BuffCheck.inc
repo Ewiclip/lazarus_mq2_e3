@@ -79,10 +79,10 @@ sub buffBotsInstant(ArrayName)
     /if (!${Bool[${Me.Buff[${buffSpellName}]}]} || (${Bool[${Me.Buff[${buffSpellName}]}]} && ${Me.Buff[${buffSpellName}].Duration.TotalSeconds} <= ${buffRecastTime})) {
     /if (!${Bool[${Me.Song[${buffSpellName}]}]} && !${Bool[${Me.Song[${buffCheckForName}]}]}) {
       /if ((${Spell[${buffSpellID}].NewStacks}) && !${Bool[${Me.Buff[${buffCheckForName}]}]}) {
-        /call check_Ready "${ArrayName}" ${s}
-       
-        /if (${c_Ready} && ${${ArrayName}[${s},${iIfs}]}) {
-          /if (${check_Mana["${ArrayName}",${s}]}) {
+        /if (${${ArrayName}[${s},${iIfs}]}) {
+	  /if (${Debug} || ${Debug_BuffCheck}) /echo Your IF -- (${${ArrayName}[${s},${iIfs}]}) --
+	  /call check_Ready "${ArrayName}" ${s}
+          /if (${c_Ready} && ${check_Mana["${ArrayName}",${s}]}) {
             |/echo CAST TYPE ${${ArrayName}[${s},${iTargetType}]}
             /call e3_Cast ${buffTargetID} "${ArrayName}" ${s}
           }
@@ -162,10 +162,11 @@ SUB buffBots(ArrayName)
   /if (${Select[${ArrayName},SelfBuffs2D,InstantBuffs2D]} || ${${ArrayName}[${s},${iCastTarget}].Equal[Self]}) {
       /if (!${Bool[${Me.Buff[${buffSpellName}]}]} || (${Bool[${Me.Buff[${buffSpellName}]}]} && ${Me.Buff[${buffSpellName}].Duration.TotalSeconds} <= ${buffRecastTime})) {
       /if (!${Bool[${Me.Song[${buffSpellName}]}]} && !${Bool[${Me.Song[${buffCheckForName}]}]}) {
-        /if (${Spell[${buffSpellID}].NewStacks} && !${Bool[${Me.Buff[${buffCheckForName}]}]}) {
-          /call check_Ready "${ArrayName}" ${s}
-          /if (${c_Ready} && ${${ArrayName}[${s},${iIfs}]}) {
-            /if (${check_Mana["${ArrayName}",${s}]}) {
+        /if (${Spell[${buffSpellID}].NewStacks} && !${Bool[${Me.Buff[${buffCheckForName}]}]}) {          
+          /if (${${ArrayName}[${s},${iIfs}]}) {
+	    /if (${Debug} || ${Debug_BuffCheck}) /echo Your IF -- (${${ArrayName}[${s},${iIfs}]}) --
+	    /call check_Ready "${ArrayName}" ${s}
+            /if (${c_Ready} && ${check_Mana["${ArrayName}",${s}]}) {
               /call e3_Cast ${buffTargetID} "${ArrayName}" ${s}
             }
           } else /if (${Debug} || ${Debug_BuffCheck}) /echo ${buffSpellName} is not ready for ${buffTarget}
@@ -177,10 +178,11 @@ SUB buffBots(ArrayName)
   } else /if (${Select[${ArrayName},PetBuffs2D]} && !${Bool[${NetBots[${buffTarget}].PetBuff.Find[${buffSpellID} ]}]} && ${Bool[${NetBots[${buffTarget}].InZone}]} && ${Spawn[${buffTarget}].LineOfSight}) {
 	|/echo Pets: ${buffTarget} ${buffSpellName} ${NetBots[${buffTarget}].PetBuff.Find[${buffSpellID} ]}
     /if (!${Bool[${NetBots[${buffTarget}].PetBuff.Find[${buffCheckForID} ]}]}) {
-        /if (!${${ArrayName}[${s},${iTargetType}].Equal[Single in Group]} || ${Bool[${Group.Member[${buffTarget}]}]}) {
-			/call check_Ready "${ArrayName}" ${s}
-			/if (${c_Ready} && ${${ArrayName}[${s},${iIfs}]}) {
-				/if (${check_Distance[${buffTargetID},${${ArrayName}[${s},${iMyRange}]}]}) {
+        /if (!${${ArrayName}[${s},${iTargetType}].Equal[Single in Group]} || ${Bool[${Group.Member[${buffTarget}]}]}) {			
+			/if (${${ArrayName}[${s},${iIfs}]}) {
+			        /if (${Debug} || ${Debug_BuffCheck}) /echo Your IF -- (${${ArrayName}[${s},${iIfs}]}) -
+			        /call check_Ready "${ArrayName}" ${s}
+				/if (${c_Ready} && ${check_Distance[${buffTargetID},${${ArrayName}[${s},${iMyRange}]}]}) {
 					/if (${check_Mana["${ArrayName}",${s}]}) {
 						/call e3_Cast ${buffTargetID} "${ArrayName}" ${s}
 						/delay 3 ${Target.BuffsPopulated}
@@ -197,9 +199,10 @@ SUB buffBots(ArrayName)
     /if (!${Select[${ArrayName},PetBuffs2D]} && !${Bool[${NetBots[${buffTarget}].Buff.Find[${buffSpellID} ]}]}	&& !${Bool[${NetBots[${buffTarget}].ShortBuff.Find[${buffSpellID} ]}]} && ${NetBots[${buffTarget}].FreeBuffSlots}>0 && ${Bool[${NetBots[${buffTarget}].InZone}]}) {
       /if (!${Bool[${NetBots[${buffTarget}].Buff.Find[${buffCheckForID} ]}]}	&& !${Bool[${NetBots[${buffTarget}].ShortBuff.Find[${buffCheckForID} ]}]}) {
         /if (!${${ArrayName}[${s},${iTargetType}].Equal[Single in Group]} || ${Bool[${Group.Member[${buffTarget}]}]}) {
-          /call check_Ready "${ArrayName}" ${s}
-          /if (${c_Ready} && ${${ArrayName}[${s},${iIfs}]}) {
-            /if (${check_Distance[${buffTargetID},${${ArrayName}[${s},${iMyRange}]}]}) {
+          /if (${${ArrayName}[${s},${iIfs}]}) {
+	    /if (${Debug} || ${Debug_BuffCheck}) /echo Your IF -- (${${ArrayName}[${s},${iIfs}]}) --
+	    /call check_Ready "${ArrayName}" ${s}
+            /if (${c_Ready} && ${check_Distance[${buffTargetID},${${ArrayName}[${s},${iMyRange}]}]}) {
               /if (${check_Mana["${ArrayName}",${s}]}) {
                 /call e3_Cast ${buffTargetID} "${ArrayName}" ${s}
                 |setting a flat delay 3, as target buffs may already be populated as you pretargeted before cast. 
