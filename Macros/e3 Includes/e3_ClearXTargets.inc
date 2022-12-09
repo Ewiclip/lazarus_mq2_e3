@@ -98,15 +98,21 @@ SUB event_clearXTargets(line, ChatSender, args)
     /varset KeepAggroOn FALSE
   }
 
-  | toggle ClearXTargetsOn on/off 
-  /if (!${ClearXTargetsOn}) {
+  /if (${Bool[${args.Find[ForceOn]}]}) {
+    /varset ClearXTargetsOn TRUE
+    /stop
+    /echo ClearXTargets: Enabled ${ClearXTargetsOn}
+  } else /if (${Bool[${args.Find[ForceOff]}]}) {
+    /varset ClearXTargetsOn FALSE
+    /echo ClearXTargets: Disabled
+  } else /if (!${ClearXTargetsOn}) {
     /varset ClearXTargetsOn TRUE
     | Disable follow to stop melee/ranged toons bouncing
     /stop
-  	/echo ClearXTargets: Enabled ${ClearXTargetsOn}
+    /echo ClearXTargets: Enabled ${ClearXTargetsOn}
   } else {
     /varset ClearXTargetsOn FALSE
-	  /echo ClearXTargets: Disabled
+    /echo ClearXTargets: Disabled
   }
 /RETURN
 
