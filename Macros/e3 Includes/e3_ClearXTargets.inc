@@ -99,22 +99,21 @@ SUB event_clearXTargets(line, ChatSender, args)
   }
 
   /if (${Bool[${args.Find[ForceOn]}]}) {
-	/varset ClearXTargetsOn TRUE
-	/stop
-	/echo ClearXTargets: Enabled ${ClearXTargetsOn}
-} else /if (${Bool[${args.Find[ForceOff]}]}) {
-	/varset ClearXTargetsOn FALSE
-	/echo ClearXTargets: Disabled
-} else /if (!${ClearXTargetsOn}) {
-	/varset ClearXTargetsOn TRUE
-	| Disable follow to stop melee/ranged toons bouncing
-	/stop
-	/echo ClearXTargets: Enabled ${ClearXTargetsOn}
- } else {
-	/varset ClearXTargetsOn FALSE
-	/echo ClearXTargets: Disabled
- }
-
+    /varset ClearXTargetsOn TRUE
+    /stop
+    /echo ClearXTargets: Enabled ${ClearXTargetsOn}
+  } else /if (${Bool[${args.Find[ForceOff]}]}) {
+    /varset ClearXTargetsOn FALSE
+    /echo ClearXTargets: Disabled
+  } else /if (!${ClearXTargetsOn}) {
+    /varset ClearXTargetsOn TRUE
+    | Disable follow to stop melee/ranged toons bouncing
+    /stop
+    /echo ClearXTargets: Enabled ${ClearXTargetsOn}
+  } else {
+    /varset ClearXTargetsOn FALSE
+    /echo ClearXTargets: Disabled
+  }
 /RETURN
 
 | Selects the next target and attacks
